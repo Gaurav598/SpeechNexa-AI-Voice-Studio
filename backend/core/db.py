@@ -1,6 +1,7 @@
 import re
 import sqlite3
 import logging
+from pathlib import Path
 from contextlib import contextmanager
 from core.config import DB_PATH
 from core import db_backup
@@ -631,13 +632,13 @@ def _run_alembic_upgrade() -> None:
         )
         msg = (
             f"Database migration failed while running: {exc}. "
-            f"VoiceStudio stopped instead of running on a partially migrated database, "
+            f"SpeechNexa stopped instead of running on a partially migrated database, "
             f"and nothing was auto-restored (your database at {DB_PATH} was left "
             f"exactly as the failed migration left it). "
             f"{backup_note}. "
             "What to do: relaunch to retry; if it keeps failing, report it at "
-            "https://github.com/debpalash/VoiceStudio/issues (keep the backup file). "
-            "To roll back manually: quit the app, replace omnivoice.db with the backup "
+            "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues (keep the backup file). "
+            f"To roll back manually: quit the app, replace {Path(DB_PATH).name} with the backup "
             "file, and reinstall the previous version."
         )
         logger.error(msg)

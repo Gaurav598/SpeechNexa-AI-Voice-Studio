@@ -15,6 +15,7 @@ import {
   enableAnalytics,
 } from '@shared/utils/analytics';
 import { routeBreadcrumb } from '@/lib/report-breadcrumb';
+import { REPO_URL } from '@shared/utils/contactLinks';
 
 interface AnalyticsState {
   available: boolean;
@@ -112,7 +113,7 @@ export function AnalyticsConsent({
         variant="link"
         className="h-auto p-0"
         onClick={() => {
-          const url = 'https://github.com/debpalash/VoiceStudio#-faq';
+          const url = REPO_URL;
           const bridge = getBridge();
           if (bridge) void bridge.files.openExternal(url).catch(() => setFailed(true));
           else window.open(url, '_blank', 'noopener,noreferrer');

@@ -18,6 +18,7 @@ import { nativeFaultSummary } from '../shared/utils/crashReport';
 import { availableBackendPort } from './backend-port';
 import { scopedStorage, scopedStorageEnv, type ScopedStorage } from './storage-scope';
 import { legacyStorageEnv } from './legacy-storage';
+import { legacyElectronRuntimeLocation } from './legacy-electron-runtime';
 import { spawn, spawnSync, type ChildProcess, type StdioOptions } from 'node:child_process';
 import { EventEmitter } from 'node:events';
 import {
@@ -53,7 +54,7 @@ import {
 import { toolSearchDirs } from './tool-path';
 import { SetupProgressTracker, cleanProcessLine } from './setup-progress';
 import { scrubText } from '../shared/utils/scrub';
-import { DEFAULT_BACKEND_PORT } from '../../../config/app-config.mjs';
+import { DEFAULT_BACKEND_PORT, PRODUCT_NAME } from '../../../config/app-config.mjs';
 
 const DEFAULT_BUDGET_S = 300;
 const READY_POLL_MS = 500;
@@ -359,12 +360,12 @@ function storedRuntimeLocation(): RuntimeLocationConfig | null {
     const parsed = JSON.parse(
       readFileSync(join(app.getPath('userData'), RUNTIME_LOCATION_FILE), 'utf8'),
     ) as { root?: unknown; owned?: unknown; scoped?: unknown };
-    return typeof parsed.root === 'string' && isAbsolute(parsed.root)
-      ? { root: resolve(parsed.root), owned: parsed.owned === true, scoped: parsed.scoped === true }
-      : null;
+    if (typeof parsed.root === 'string' && isAbsolute(parsed.root))
+      return { root: resolve(parsed.root), owned: parsed.owned === true, scoped: parsed.scoped === true };
   } catch {
-    return null;
+    // A fresh profile may still have a compatible runtime in the old install.
   }
+  return legacyElectronRuntimeLocation(app.getPath('userData'));
 }
 
 function storedRuntimeRoot(): string | null {
@@ -387,11 +388,15 @@ function scopedRuntimeRoot(): string | null {
   return stored?.scoped && !samePath(stored.root, defaultRuntimeRoot()) ? stored.root : null;
 }
 
-function selectedRuntimeRoot(parent: string): string {
+export function selectedRuntimeRoot(parent: string): string {
   const selected = resolve(parent);
-  return basename(selected).toLocaleLowerCase('en-US') === 'voicestudio'
+  // The picker may return an existing VoiceStudio folder. Reuse that exact
+  // location for compatibility, but brand all newly created folders locally.
+  return ['voicestudio', PRODUCT_NAME.toLocaleLowerCase('en-US')].includes(
+    basename(selected).toLocaleLowerCase('en-US'),
+  )
     ? selected
-    : join(selected, 'VoiceStudio');
+    : join(selected, PRODUCT_NAME);
 }
 
 /** File-manager metadata a new folder can hold; it is not another installation's data. */
@@ -538,6 +543,7 @@ function childEnv(
   if (!env.OMNIVOICE_BUNDLED_UV) {
     const uv = findUv();
     if (uv) env.OMNIVOICE_BUNDLED_UV = uv;
+    else delete env.OMNIVOICE_BUNDLED_UV;
   }
   // #2599: LAN devices load the web UI from this backend. Serve the build
   // shipped inside this app version's resources, never a copy beside the

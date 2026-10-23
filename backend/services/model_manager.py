@@ -8,12 +8,13 @@ import re
 import sys
 import threading
 import time
+import weakref
 from concurrent.futures import Executor, Future, ThreadPoolExecutor
 
 from utils.containment import contain_system_exit
 
 # ── Lazy imports ─────────────────────────────────────────────────────
-# torch and VoiceStudio are heavy (~2-3s import on Apple Silicon).
+# torch and OmniVoice are heavy (~2-3s import on Apple Silicon).
 # Deferring them until first use cuts cold start from ~4s to ~1.5s,
 # so health/status endpoints respond immediately on boot.
 
@@ -64,7 +65,7 @@ def _lazy_omnivoice():
     if _OmniVoice is None:
         try:
             # The class is OmniVoice — a library identifier, not product
-            # branding. The VoiceStudio rename must not touch it (checkpoint
+            # branding. A product rename must not touch it (checkpoint
             # configs reference the class name via transformers architectures).
             from omnivoice.models.omnivoice import OmniVoice as _OV
         except ModuleNotFoundError as exc:
@@ -102,7 +103,7 @@ from core.generate_budget import (
 
 logger = logging.getLogger("omnivoice.model")
 
-# Per-TTS-job VRAM headroom estimate. VoiceStudio's forward + autoregressive
+# Per-TTS-job VRAM headroom estimate. OmniVoice's forward + autoregressive
 # decode peaks around 1.6 GB, but the interactive clone path co-loads WhisperX
 # large-v3 ASR (~3 GB) to transcribe the reference, so a *concurrent* clone job
 # is realistically ~5 GB. The old 2.5 GB budget over-committed: an 8 GB card
@@ -559,6 +560,125 @@ class GpuPoolBusyError(TimeoutError):
         self.retry_after = max(1, int(round(retry_after)))
 
 
+def _probe_free_vram_gb() -> "float | None":
+    """Live dedicated GPU headroom; unknown and unified memory stay ungated."""
+    try:
+        from services.memory_budget import available_memory
+
+        value = available_memory().get("vram_free_gb")
+        free = float(value)
+        return max(0.0, free) if math.isfinite(free) else None
+    except Exception:  # noqa: BLE001 — failed device probes mean unknown memory
+        return None
+
+
+class _GpuMemoryReservations:
+    """Account for overlapping GPU jobs, including abandoned pool threads.
+
+    The first lease establishes a free-VRAM budget for its overlap window.
+    Each later lease must fit both the remaining budget and the latest free
+    VRAM reading. This avoids double-counting a running job's real allocation,
+    while a single job is always admitted even on an under-provisioned card.
+    """
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._states = weakref.WeakKeyDictionary()
+
+    def snapshot(self, executor) -> dict:
+        with self._lock:
+            state = self._states.get(executor)
+            return {
+                "memory_reserved_gb": round(state["reserved"], 2) if state else 0.0,
+                "memory_waiting": len(state["waiters"]) if state else 0,
+            }
+
+    @staticmethod
+    def _wake(waiters) -> None:
+        for waiter_loop, waiter_event in waiters:
+            try:
+                waiter_loop.call_soon_threadsafe(waiter_event.set)
+            except RuntimeError:
+                pass  # A disconnected caller closed its event loop.
+
+    async def acquire(self, executor, amount_gb: float, timeout: float,
+                      what: str):
+        if amount_gb <= 0 or not math.isfinite(amount_gb):
+            return lambda: None
+        deadline = time.monotonic() + max(0.0, timeout)
+        loop = asyncio.get_running_loop()
+        waiter = (loop, asyncio.Event())
+        queued = False
+
+        while True:
+            free_gb = _probe_free_vram_gb()
+            if free_gb is None:
+                if queued:
+                    with self._lock:
+                        state["waiters"].remove(waiter)
+                        successors = list(state["waiters"])
+                    self._wake(successors)
+                return lambda: None
+            with self._lock:
+                state = self._states.get(executor)
+                if state is None:
+                    state = {"budget": free_gb, "reserved": 0.0, "waiters": []}
+                    self._states[executor] = state
+                if state["reserved"] == 0:
+                    state["budget"] = free_gb
+                headroom = min(state["budget"] - state["reserved"], free_gb)
+                first_in_line = not state["waiters"] or state["waiters"][0] is waiter
+                if first_in_line and (state["reserved"] == 0 or amount_gb <= headroom):
+                    if queued:
+                        state["waiters"].remove(waiter)
+                    state["reserved"] += amount_gb
+                    successors = list(state["waiters"])
+                    break
+                if not queued:
+                    state["waiters"].append(waiter)
+                    queued = True
+
+            try:
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    raise asyncio.TimeoutError
+                await asyncio.wait_for(waiter[1].wait(), remaining)
+                waiter[1].clear()
+            except BaseException as exc:
+                # Cancellation or timeout must relinquish this FIFO position,
+                # including when it was first in line.
+                with self._lock:
+                    state["waiters"].remove(waiter)
+                    successors = list(state["waiters"])
+                self._wake(successors)
+                if isinstance(exc, asyncio.TimeoutError):
+                    raise GpuPoolBusyError(
+                        f"{what} waited {timeout:.0f}s for GPU memory reserved by "
+                        "earlier jobs and never started. Retry after those jobs finish.",
+                        retry_after=_retry_after_estimate(gpu_pool_stats(executor)),
+                    ) from None
+                raise
+
+        self._wake(successors)
+
+        released = False
+
+        def release() -> None:
+            nonlocal released
+            with self._lock:
+                if released:
+                    return
+                released = True
+                state["reserved"] = max(0.0, state["reserved"] - amount_gb)
+                waiters = list(state["waiters"])
+            self._wake(waiters)
+
+        return release
+
+
+_gpu_memory_reservations = _GpuMemoryReservations()
+
+
 def _explicit_budget_flags() -> "tuple[bool, bool]":
     """(universal_explicit, cpu_explicit): is the accelerated / CPU budget set
     by the user (env, or changed at runtime)? The single definition shared by
@@ -713,10 +833,11 @@ def gpu_pool_stats(executor=None) -> dict:
     fn = getattr(ex, "stats", None)
     if callable(fn):
         try:
-            return fn()
+            return {**fn(), **_gpu_memory_reservations.snapshot(ex)}
         except Exception:  # noqa: BLE001 — telemetry must never break a request
             pass
-    return {"queued": 0, "running": 0, "workers": 1, "avg_job_s": 0.0}
+    return {"queued": 0, "running": 0, "workers": 1, "avg_job_s": 0.0,
+            **_gpu_memory_reservations.snapshot(ex)}
 
 
 def check_gpu_admission(*, what: str = "GPU job", executor=None) -> None:
@@ -793,11 +914,10 @@ async def run_on_gpu_pool_guarded(fn, *, what: str = "GPU job",
     Executors without ``reset`` (a plain ThreadPoolExecutor in tests) still get
     both bounds; only the reset step is skipped.
 
-    ``min_vram_gb`` is the declared VRAM floor of the engine this job belongs
-    to (``TTSBackend.min_vram_gb``); it only shapes the timeout MESSAGE. Left
-    at 0 — the default, and correct for every non-TTS job on this pool
-    (reference transcribe, watermarking, dub steps) — the under-provisioned-GPU
-    wording is never used, because nothing measured says it applies (#1226).
+    ``min_vram_gb`` is the engine's declared VRAM floor. When dedicated free
+    VRAM is measurable it also reserves that much for overlapping jobs;
+    unknown memory and the first job keep their old permissive behavior.
+    Left at 0 for jobs without a measured engine requirement.
 
     ``on_abandon`` is called once, after a job whose caller stopped waiting can
     no longer access its inputs. A queued job that is cancelled before it
@@ -839,6 +959,18 @@ async def run_on_gpu_pool_guarded(fn, *, what: str = "GPU job",
         except Exception:  # noqa: BLE001 — cleanup cannot hide the pool result
             logger.exception("%s abandon cleanup failed", _log_safe(what))
 
+    queue_wait_started = time.monotonic()
+    try:
+        release_memory = await _gpu_memory_reservations.acquire(
+            ex, float(min_vram_gb), queue_timeout, what,
+        )
+    except BaseException:
+        # No pool future owns this call yet, so caller-owned inputs can be
+        # released immediately on memory timeout or disconnect.
+        _fire_abandon_callback()
+        raise
+    worker_queue_timeout = max(0.0, queue_timeout - (time.monotonic() - queue_wait_started))
+
     def _job():
         # First thing the worker does: tell the awaiting coroutine the
         # execution clock may start. call_soon_threadsafe is the only
@@ -858,11 +990,17 @@ async def run_on_gpu_pool_guarded(fn, *, what: str = "GPU job",
             with _abandon_lock:
                 _abandon_state["finished"] = True
                 abandoned = _abandon_state["requested"]
+            release_memory()
             if abandoned:
                 _fire_abandon_callback()
 
     from core.render_trace import bind as bind_render_trace
-    concurrent_fut = ex.submit(bind_render_trace(_job))
+    try:
+        concurrent_fut = ex.submit(bind_render_trace(_job))
+    except BaseException:
+        release_memory()
+        _fire_abandon_callback()
+        raise
     fut = asyncio.wrap_future(concurrent_fut, loop=loop)
 
     def _abandon() -> None:
@@ -874,6 +1012,8 @@ async def run_on_gpu_pool_guarded(fn, *, what: str = "GPU job",
             _abandon_state["requested"] = True
             finished = _abandon_state["finished"]
         fut.cancel()
+        if cancelled_before_start:
+            release_memory()
         if cancelled_before_start or finished:
             _fire_abandon_callback()
 
@@ -882,7 +1022,7 @@ async def run_on_gpu_pool_guarded(fn, *, what: str = "GPU job",
         # Phase 1 — queue wait. Watch the future too, so a job that fails or is
         # cancelled while still queued resolves here instead of hanging.
         done, _pending = await asyncio.wait(
-            {waiter, fut}, timeout=queue_timeout,
+            {waiter, fut}, timeout=worker_queue_timeout,
             return_when=asyncio.FIRST_COMPLETED,
         )
     except asyncio.CancelledError:
@@ -1220,11 +1360,11 @@ def _timeout_guidance(
         return (
             f"{what} was abandoned after {timeout:.0f}s without doing any "
             "work — it spent the whole time waiting on an internal lock, not "
-            "computing. This is a bug in VoiceStudio, not a limit of your "
+            "computing. This is a bug in SpeechNexa, not a limit of your "
             "machine, so shorter text or a lighter engine won't help. "
             "Restart the backend to clear it (Settings → Logs → Backend has "
             "the stack trace that was captured), and please report it with "
-            "that log at https://github.com/debpalash/VoiceStudio/issues — "
+            "that log at https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues — "
             "the trace names exactly where it stopped."
         )
     common = (
@@ -1471,7 +1611,7 @@ _model_lock = asyncio.Lock()
 #: `OmniVoiceBackend._ensure_loaded()` on a second pool worker holds only this
 #: lock. On a CUDA host the pool has up to four workers (#567), so the second
 #: route saw `model is None` — the preload had not finished — took this free
-#: lock, and ran `VoiceStudio.from_pretrained` CONCURRENTLY with the preload's.
+#: lock, and ran `OmniVoice.from_pretrained` CONCURRENTLY with the preload's.
 #: Two overlapping native loads in one process is precisely what Windows
 #: answers with 0xC0000005 ("exit code -1073741819"), which is what #2394
 #: reported 16 s after startup while a background preload was in flight.
@@ -2048,7 +2188,7 @@ def _env_flag(name: str, default: bool = False) -> bool:
 
 
 def should_preload_tts_asr() -> bool:
-    """Whether VoiceStudio.from_pretrained should attach PyTorch Whisper.
+    """Whether OmniVoice.from_pretrained should attach PyTorch Whisper.
 
     The default is intentionally false. On Apple Silicon, eager TTS + ASR
     loading can overcommit unified memory and leave desktop startup stuck
@@ -2217,7 +2357,7 @@ def _manual_cache_delete_hint(checkpoint: str) -> str:
             return ""
         from services.hf_cache_repair import repo_cache_dir
         return (
-            f" If the problem persists, quit VoiceStudio, delete "
+            f" If the problem persists, quit SpeechNexa, delete "
             f"{repo_cache_dir(checkpoint)} and restart — the model "
             "re-downloads automatically."
         )
@@ -2389,7 +2529,7 @@ _DEFAULT_OMNIVOICE_CHECKPOINT = "k2-fsa/OmniVoice"
 
 
 def resolve_omnivoice_checkpoint() -> str:
-    """Resolve the VoiceStudio TTS checkpoint from ``OMNIVOICE_MODEL``, self-healing
+    """Resolve the OmniVoice TTS checkpoint from ``OMNIVOICE_MODEL``, self-healing
     a misconfigured value.
 
     A valid checkpoint is either a HuggingFace repo id (``org/repo`` — contains a
@@ -2601,16 +2741,16 @@ def _load_model_sync():
 
     lid = register_listener(_on_hf_progress)
     try:
-        _set_loading("importing", "Importing PyTorch & VoiceStudio runtime…")
-        logger.info("Importing PyTorch & VoiceStudio runtime…")
+        _set_loading("importing", "Importing PyTorch & OmniVoice runtime…")
+        logger.info("Importing PyTorch & OmniVoice runtime…")
         torch = _lazy_torch()
-        VoiceStudio = _lazy_omnivoice()
+        OmniVoice = _lazy_omnivoice()
         device = get_best_device()
         from omnivoice.utils.dtype import tts_dtype_name
 
         checkpoint = resolve_omnivoice_checkpoint()
         _set_loading("loading_weights", f"Loading TTS weights on {device}…")
-        logger.info("Loading VoiceStudio model on device: %s", device)
+        logger.info("Loading OmniVoice model on device: %s", device)
         preload_asr = should_preload_tts_asr()
         if preload_asr:
             logger.info("Preloading PyTorch Whisper after TTS model load.")
@@ -2619,7 +2759,7 @@ def _load_model_sync():
         _preflight_truncated_weights(checkpoint)
 
         def _load():
-            return VoiceStudio.from_pretrained(
+            return OmniVoice.from_pretrained(
                 checkpoint, device_map=device,
                 dtype=getattr(torch, tts_dtype_name(device)), load_asr=False,
             )
@@ -2649,7 +2789,7 @@ def _load_model_sync():
                 raise RuntimeError(
                     f"The {asset_label} files for {repair_checkpoint} are damaged and a "
                     "re-download did not fix them. Open the engine's Weights list in Model Catalogue, "
-                    "delete the VoiceStudio TTS model, and install it again."
+                    "delete the OmniVoice TTS model, and install it again."
                     f"{_manual_cache_delete_hint(repair_checkpoint)}"
                 ) from exc
             _FORCED_REDOWNLOAD_ATTEMPTED.add(repair_checkpoint)
@@ -2668,7 +2808,7 @@ def _load_model_sync():
                     "download that stopped part-way, or a file changed on "
                     "disk after it arrived — and could not be re-downloaded "
                     f"automatically.{_repair_failure_detail()} Open Settings "
-                    "→ Models, delete the VoiceStudio TTS model, and install "
+                    "→ Models, delete the OmniVoice TTS model, and install "
                     f"it again.{_manual_cache_delete_hint(repair_checkpoint)}"
                 ) from exc
             _set_loading("loading_weights", f"Loading TTS weights on {device}…")
@@ -2680,7 +2820,7 @@ def _load_model_sync():
                 raise RuntimeError(
                     f"The {asset_label} files for {repair_checkpoint} are still damaged "
                     "after being re-downloaded. Open the engine's Weights list in Model Catalogue, "
-                    "delete the VoiceStudio TTS model, and install it again."
+                    "delete the OmniVoice TTS model, and install it again."
                     f"{_manual_cache_delete_hint(repair_checkpoint)}"
                 ) from exc2
 
@@ -2735,7 +2875,7 @@ def _load_model_sync():
                             f"The TTS model cache for {checkpoint} is incomplete "
                             "(weights missing — usually an interrupted download)."
                             f"{_repair_failure_detail()} "
-                            "Open the engine's Weights list in Model Catalogue, delete the VoiceStudio TTS model, "
+                            "Open the engine's Weights list in Model Catalogue, delete the OmniVoice TTS model, "
                             f"and install it again.{_manual_cache_delete_hint(checkpoint)}"
                         ) from e
                     _set_loading("loading_weights", f"Loading TTS weights on {device}…")
@@ -2762,21 +2902,21 @@ def _load_model_sync():
                                     raise RuntimeError(
                                         f"The TTS model cache for {checkpoint} is incomplete "
                                         "and could not be auto-repaired. Open Model "
-                                        "Catalogue → Models, delete the VoiceStudio TTS model, and install "
+                                        "Catalogue → Models, delete the OmniVoice TTS model, and install "
                                         f"it again.{_manual_cache_delete_hint(checkpoint)}"
                                     ) from e3
                             else:
                                 raise RuntimeError(
                                     f"The TTS model cache for {checkpoint} is incomplete and "
                                     f"could not be auto-repaired.{_repair_failure_detail()} "
-                                    "Open the engine's Weights list in Model Catalogue, delete the VoiceStudio TTS model, "
+                                    "Open the engine's Weights list in Model Catalogue, delete the OmniVoice TTS model, "
                                     f"and install it again.{_manual_cache_delete_hint(checkpoint)}"
                                 ) from e2
                         else:
                             raise RuntimeError(
                                 f"The TTS model cache for {checkpoint} is incomplete and "
                                 "could not be auto-repaired. Open the engine's Weights list in Model Catalogue, delete "
-                                "the VoiceStudio TTS model, and install it again."
+                                "the OmniVoice TTS model, and install it again."
                                 f"{_manual_cache_delete_hint(checkpoint)}"
                             ) from e2
         except Exception as e_corrupt:
@@ -2923,7 +3063,7 @@ def _load_model_sync():
             logger.debug("Could not attach resident model identity", exc_info=True)
 
         _set_loading("ready", "Model ready", progress=100)
-        logger.info("VoiceStudio model loaded successfully.")
+        logger.info("OmniVoice model loaded successfully.")
         return _model
     except ModelLoadInterruptedByShutdown:
         raise
@@ -3235,7 +3375,7 @@ async def get_model(*, allow_load: bool = True):
     # Opportunistic profile samples must never load weights, including when
     # ASR or idle cleanup evicted them after the caller's residency check.
     if not allow_load:
-        raise RuntimeError("VoiceStudio model is not loaded")
+        raise RuntimeError("OmniVoice model is not loaded")
 
     if running_on_gpu_pool():
         # Same reasoning as _heal_tts_placement below, applied to the COLD
@@ -3570,7 +3710,7 @@ async def idle_worker():
         idle_timeout = _resolve_idle_timeout()
         async with _model_lock:
             if model is not None and time.time() - _last_used > idle_timeout:
-                logger.info("Idle timeout reached. Unloading VoiceStudio model to free VRAM.")
+                logger.info("Idle timeout reached. Unloading OmniVoice model to free VRAM.")
                 unload_shared_model()
         # The capture/dictation ASR was never idle-released — so once a user
         # dictated, its model stayed resident for the life of the process while
@@ -3740,7 +3880,7 @@ def free_vram():
 
 
 def unload_shared_model() -> bool:
-    """Drop the shared VoiceStudio model and actually give the memory back.
+    """Drop the shared OmniVoice model and actually give the memory back.
 
     The order is the entire point of this function. Clearing the reference has
     to come FIRST, then the allocator caches. ``free_vram()`` run while

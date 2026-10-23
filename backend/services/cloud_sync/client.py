@@ -55,8 +55,6 @@ _ORGANIZATION_ID = re.compile(r"^[A-Za-z0-9]{1,64}$")
 #: The sync API of each environment (vssaas desktop-app-guide §1). The client talks
 #: to one of these and nothing else, whatever the bridge answers.
 _KNOWN_SYNC_APIS = (
-    "https://appapi.voicestudio.sh/v1/sync",
-    "https://dev-appapi.voicestudio.sh/v1/sync",
     "http://127.0.0.1:8090/v1/sync",
 )
 

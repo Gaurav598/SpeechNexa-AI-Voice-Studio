@@ -14,12 +14,12 @@ import {
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-const APP_NAME = 'VoiceStudio';
+const APP_NAME = 'SpeechNexa';
 const here = dirname(fileURLToPath(import.meta.url));
 const electronRoot = resolve(here, '..');
 const repoRoot = resolve(electronRoot, '..');
 const require = createRequire(import.meta.url);
-const defaultCacheRoot = join(electronRoot, 'node_modules', '.cache', 'voicestudio-electron-dev');
+const defaultCacheRoot = join(electronRoot, 'node_modules', '.cache', 'speechnexa-electron-dev');
 
 export function createMacDevBundlePlan({
   electronExecutable,
@@ -111,7 +111,7 @@ export function prepareMacDevElectron({
     const infoPlist = join(stagingBundle, 'Contents', 'Info.plist');
     replacePlistValue(infoPlist, 'CFBundleDisplayName', APP_NAME, runCommand);
     replacePlistValue(infoPlist, 'CFBundleName', APP_NAME, runCommand);
-    replacePlistValue(infoPlist, 'CFBundleIdentifier', 'com.voicestudio.desktop.dev', runCommand);
+    replacePlistValue(infoPlist, 'CFBundleIdentifier', 'com.speechnexa.desktop.dev', runCommand);
     replacePlistValue(infoPlist, 'CFBundleIconFile', `${APP_NAME}.icns`, runCommand);
     replacePlistValue(infoPlist, 'CFBundleShortVersionString', appVersion, runCommand);
     replacePlistValue(infoPlist, 'CFBundleVersion', appVersion, runCommand);

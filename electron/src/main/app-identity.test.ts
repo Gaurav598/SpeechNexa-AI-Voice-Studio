@@ -14,13 +14,13 @@ describe('installAppIdentity', () => {
     installAppIdentity({ setName });
 
     expect(setName).toHaveBeenCalledOnce();
-    expect(setName).toHaveBeenCalledWith('VoiceStudio');
+    expect(setName).toHaveBeenCalledWith('SpeechNexa');
   });
 
-  it('defines the complete native macOS menu with VoiceStudio app labels', () => {
+  it('defines the complete native macOS menu with SpeechNexa app labels', () => {
     const template = createMacApplicationMenuTemplate();
 
-    expect(template[0]).toMatchObject({ label: 'VoiceStudio' });
+    expect(template[0]).toMatchObject({ label: 'SpeechNexa' });
     expect(template[0]?.submenu).toEqual(
       expect.arrayContaining([{ role: 'about' }, { role: 'hide' }, { role: 'quit' }]),
     );
@@ -54,7 +54,7 @@ describe('installAppIdentity', () => {
     installMacApplicationMenu(application, menu, '0.5.6');
 
     expect(application.setAboutPanelOptions).toHaveBeenCalledWith({
-      applicationName: 'VoiceStudio',
+      applicationName: 'SpeechNexa',
       applicationVersion: '0.5.6',
       version: '0.5.6',
     });

@@ -78,7 +78,7 @@ export async function startDevBackendProxy(
   const server = createServer((incoming, response) => {
     if (proxyRequestRefused(incoming.headers, allowedOrigins)) {
       response.writeHead(403, { 'content-type': 'application/json' });
-      response.end('{"detail":"Request refused: it did not come from the VoiceStudio window"}');
+      response.end('{"detail":"Request refused: it did not come from the SpeechNexa window"}');
       incoming.resume();
       return;
     }

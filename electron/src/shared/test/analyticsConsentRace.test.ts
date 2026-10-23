@@ -1,6 +1,7 @@
 import { expect, it, vi } from 'vitest';
 
 it('cannot opt back in when SDK loading completes after consent was withdrawn', async () => {
+  vi.stubEnv('VITE_POSTHOG_KEY', 'phc_speechnexa_test_destination');
   vi.resetModules();
   const sdk = {
     init: vi.fn(),
@@ -28,4 +29,5 @@ it('cannot opt back in when SDK loading completes after consent was withdrawn', 
   expect(sdk.opt_in_capturing).toHaveBeenCalledOnce();
   vi.doUnmock('posthog-js/dist/module.slim.no-external');
   vi.doUnmock('posthog-js/dist/extension-bundles');
+  vi.unstubAllEnvs();
 });

@@ -162,6 +162,58 @@ def _saved_wav_bytes(filename):
         return f.read()
 
 
+def test_classic_generate_persists_validated_job(client, monkeypatch, no_omnivoice_model):
+    import api.routers.generation as gen
+    import soundfile as sf
+
+    fake = _make_deterministic_engine()
+    monkeypatch.setitem(_tts_mod()._REGISTRY, fake.id, fake)
+    response = client.post("/generate", data={"text": "Hello.", "engine": fake.id})
+    assert response.status_code == 200, response.text
+    job_id = response.headers["x-job-id"]
+    row = client.get(f"/jobs/{job_id}")
+    assert row.status_code == 200
+    job = row.json()
+    assert job["type"] == "speech_generate"
+    assert job["status"] == "done"
+    meta = json.loads(job["meta_json"])
+    assert meta["audio_id"] == response.headers["x-audio-id"]
+    assert meta["audio_path"] == response.headers["x-audio-path"]
+    assert meta["wav_bytes"] == len(response.content)
+    assert sf.info(os.path.join(gen.OUTPUTS_DIR, meta["audio_path"])).frames > 0
+
+
+def test_stream_failure_settles_persisted_job(client, monkeypatch, no_omnivoice_model):
+    fake = _make_deterministic_engine(fail_on_call=1)
+    monkeypatch.setitem(_tts_mod()._REGISTRY, fake.id, fake)
+    response = client.post("/generate", data={
+        "text": "Hello.", "engine": fake.id, "stream": "true",
+    })
+    assert response.status_code == 200
+    assert json.loads(response.text.splitlines()[-1])["type"] == "error"
+    row = client.get(f"/jobs/{response.headers['x-job-id']}").json()
+    assert row["status"] == "failed"
+    assert row["finished_at"] is not None
+    assert "stream-secret" not in (row["error"] or "")
+
+
+def test_corrupt_saved_wav_never_completes_job(client, monkeypatch, no_omnivoice_model):
+    import api.routers.generation as gen
+    from pathlib import Path
+
+    fake = _make_deterministic_engine()
+    monkeypatch.setitem(_tts_mod()._REGISTRY, fake.id, fake)
+    monkeypatch.setattr(
+        gen, "save_generation_wav",
+        lambda path, *_args, **_kwargs: Path(path).write_bytes(b"invalid wav"),
+    )
+    response = client.post("/generate", data={"text": "Hello.", "engine": fake.id})
+    assert response.status_code == 500
+    job = client.get(f"/jobs/{response.headers['x-job-id']}").json()
+    assert job["status"] == "failed"
+    assert not list(Path(gen.OUTPUTS_DIR).glob("*.wav"))
+
+
 async def _asgi_stream_post(path, form_data):
     """POST form data straight at the ASGI app, timestamping every
     http.response.body message as it is SENT — the boundary uvicorn flushes

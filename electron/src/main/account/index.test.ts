@@ -51,20 +51,16 @@ afterEach(() => {
   h.keyring = false;
   h.setBackendOnlyEnv.mockClear();
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
-it('hands the bridge to the backend spawn only, never to process.env', async () => {
+it('does not start the inherited account bridge in a developer build', async () => {
   h.dir = mkdtempSync(join(tmpdir(), 'vs-account-'));
   const close = await startAccount(opts);
-  const vars = h.setBackendOnlyEnv.mock.calls[0][0];
-  expect(vars.VOICESTUDIO_ACCOUNT_BRIDGE_URL).toMatch(/^http:\/\/127\.0\.0\.1:\d+$/);
-  expect(vars.VOICESTUDIO_ACCOUNT_BRIDGE_TOKEN).toMatch(/^[0-9a-f]{64}$/);
+  expect(h.setBackendOnlyEnv).not.toHaveBeenCalled();
   expect(process.env.VOICESTUDIO_ACCOUNT_BRIDGE_TOKEN).toBeUndefined();
   close();
-  expect(h.setBackendOnlyEnv).toHaveBeenLastCalledWith({
-    VOICESTUDIO_ACCOUNT_BRIDGE_URL: undefined,
-    VOICESTUDIO_ACCOUNT_BRIDGE_TOKEN: undefined,
-  });
+  expect(h.setBackendOnlyEnv).not.toHaveBeenCalled();
 });
 
 it('starts no bridge when the build does not offer accounts', async () => {
@@ -102,7 +98,7 @@ function signedInDir(): string {
   return dir;
 }
 
-it('tells the local backend to stop when sync goes off and to start when it comes back on', async () => {
+it('does not start inherited sync with saved switches enabled', async () => {
   h.dir = signedInDir();
   opts.notifyBackend.mockClear();
   const close = await startAccount(opts);
@@ -112,12 +108,7 @@ it('tells the local backend to stop when sync goes off and to start when it come
   await set({}, { syncEnabled: true });
   await set({}, { accountEnabled: false });
   close();
-  expect(opts.notifyBackend.mock.calls.map((c) => c[0])).toEqual([
-    '/api/cloud-sync/start',
-    '/api/cloud-sync/stop',
-    '/api/cloud-sync/start',
-    '/api/cloud-sync/stop',
-  ]);
+  expect(opts.notifyBackend).not.toHaveBeenCalled();
 });
 
 it('never calls a remote backend about sync', async () => {
@@ -129,17 +120,14 @@ it('never calls a remote backend about sync', async () => {
   expect(notifyBackend).not.toHaveBeenCalled();
 });
 
-it('signing out tells the backend to stop syncing', async () => {
+it('signing out a retained session does not contact the inherited backend', async () => {
   h.dir = signedInDir();
   opts.notifyBackend.mockClear();
   const close = await startAccount(opts);
   await h.handlers.get('account:set-switches')!({}, { accountEnabled: true, syncEnabled: true });
   await h.handlers.get('account:sign-out')!({});
   close();
-  expect(opts.notifyBackend.mock.calls.map((c) => c[0])).toEqual([
-    '/api/cloud-sync/start',
-    '/api/cloud-sync/stop',
-  ]);
+  expect(opts.notifyBackend).not.toHaveBeenCalled();
 });
 
 it('signing out deletes the cached profile photo', async () => {

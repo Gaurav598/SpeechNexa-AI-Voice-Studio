@@ -38,16 +38,13 @@ it('keeps the heading and description together beside the contributor artwork', 
   expect(copy.nextElementSibling).toHaveClass('home-contributors');
 });
 
-it('previews the official website only when the title is clicked', () => {
+it('presents the SpeechNexa identity without opening the upstream website', () => {
   browser.open.mockClear();
   render(<HomePage />);
-  const title = screen.getByRole('link', { name: 'homeUi.title' });
-  expect(en.homeUi.title).toBe('VoiceStudio.sh Open Source');
-  expect(title).toHaveAttribute('href', 'https://voicestudio.sh');
-  fireEvent.mouseEnter(title);
+  const title = screen.getByRole('heading', { name: 'homeUi.title' });
+  expect(en.homeUi.title).toBe('SpeechNexa');
+  expect(title.closest('a')).toBeNull();
   expect(browser.open).not.toHaveBeenCalled();
-  fireEvent.click(title);
-  expect(browser.open).toHaveBeenCalledWith('https://voicestudio.sh');
 });
 
 it('names the feature Dubbing consistently while preserving the existing route', () => {

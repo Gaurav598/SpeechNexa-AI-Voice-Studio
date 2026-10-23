@@ -50,6 +50,50 @@ def test_mark_failed_carries_error():
     assert row["error"] == "something broke"
 
 
+def test_generation_transition_guards_terminal_state_and_persists_output():
+    import json
+
+    jid = _unique_id("speech")
+    job_store.create(jid, type="speech_generate", replace=False)
+    assert job_store.transition(
+        jid, from_statuses=("pending",), to_status="running"
+    )
+    assert not job_store.transition(
+        jid, from_statuses=("running",), to_status="done"
+    )
+    assert job_store.transition(
+        jid, from_statuses=("running",), to_status="post_processing"
+    )
+    assert job_store.transition(
+        jid, from_statuses=("post_processing",), to_status="done",
+        meta_update={"audio_id": "12345678", "wav_bytes": 100},
+    )
+    assert not job_store.transition(
+        jid, from_statuses=("running", "post_processing"), to_status="failed",
+        error="late worker",
+    )
+    row = job_store.get(jid)
+    assert row["status"] == "done"
+    assert row["error"] is None
+    assert json.loads(row["meta_json"])["wav_bytes"] == 100
+
+
+def test_restart_sweeps_generation_post_processing():
+    jid = _unique_id("speech_restart")
+    job_store.create(jid, type="speech_generate")
+    job_store.transition(
+        jid, from_statuses=("pending",), to_status="running"
+    )
+    job_store.transition(
+        jid, from_statuses=("running",), to_status="post_processing"
+    )
+    assert jid in {row["id"] for row in job_store.list_jobs(status="active")}
+    job_store.sweep_orphans_on_startup()
+    row = job_store.get(jid)
+    assert row["status"] == "failed"
+    assert "server restart" in row["error"]
+
+
 # ── Events ─────────────────────────────────────────────────────────────────
 
 

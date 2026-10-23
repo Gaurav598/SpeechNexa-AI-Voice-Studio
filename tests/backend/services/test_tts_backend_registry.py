@@ -281,8 +281,11 @@ def test_isolation_mode_in_process_vs_subprocess(registry_sandbox):
 
     assert out["fake-sub"]["isolation_mode"] == "subprocess"
     assert out["healthy-inproc"]["isolation_mode"] == "in-process"
-    # The pre-existing OmniVoice backend is in-process — sanity check.
-    assert out["omnivoice"]["isolation_mode"] == "in-process"
+    # MPS hosts route the same engine ID through a crash-isolated sidecar.
+    from core.device_caps import detect_host_caps
+
+    expected = "subprocess" if detect_host_caps().family == "mps" else "in-process"
+    assert out["omnivoice"]["isolation_mode"] == expected
 
 
 def test_last_error_cleared_after_recovery(registry_sandbox):

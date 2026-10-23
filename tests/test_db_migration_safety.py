@@ -184,7 +184,8 @@ def test_midflight_failure_stops_startup_and_names_backup(tmp_path, monkeypatch)
     assert backups, "the pre-migration backup must exist on failure"
     assert backups[0] in msg, "the error must name the backup path"
     assert str(db) in msg, "the error must name the live DB path"
-    assert "github.com/debpalash/VoiceStudio/issues" in msg
+    assert "SpeechNexa stopped" in msg
+    assert "github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues" in msg
     # Original data still present in BOTH the live DB and the backup —
     # and nothing was auto-restored (the backup file is separate).
     assert _profile_names(db) == ["Alice"]

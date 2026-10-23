@@ -1634,7 +1634,7 @@ async def global_exception_handler(request: Request, exc: Exception):
                 # genuinely reportable bugs — suppressing the report button for
                 # every 503 would silence exactly the class users need to file.
                 "detail": (
-                    "[shutting_down] VoiceStudio is shutting down, so it didn't "
+                    "[shutting_down] SpeechNexa is shutting down, so it didn't "
                     "start loading the model. Reopen the app and try again."
                 )
             },
@@ -1669,7 +1669,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 
     content = public_exception_response(
         exc,
-        fallback="VoiceStudio hit an internal error; check the backend log for details.",
+        fallback="SpeechNexa hit an internal error; check the backend log for details.",
     )
     content["error_class"] = _entry.get("error_class")
     # The Python exception TYPE rides along with the taxonomy class. The class
@@ -1736,7 +1736,7 @@ class StartupGateMiddleware:
             status_code=503,
             content={
                 "detail": (
-                    f"[starting] VoiceStudio is still starting "
+                    f"[starting] SpeechNexa is still starting "
                     f"({_label or 'initializing'}). Retry shortly."
                 ),
                 "step": _step,
@@ -2211,7 +2211,7 @@ if __name__ == "__main__":
 
     def _fail_port_in_use(exc: "OSError | None") -> None:
         print(
-            f"FATAL: port {_port} is already in use — another VoiceStudio "
+            f"FATAL: port {_port} is already in use — another SpeechNexa "
             f"backend (or another app) is listening on it. Quit the other "
             f"instance and relaunch; if nothing is visibly running, an "
             f"orphaned backend from a previous session is still holding the "
@@ -2230,7 +2230,7 @@ if __name__ == "__main__":
         shell's "Last output" shows it instead of a bare exit code.
         """
         print(
-            f"FATAL: the operating system refused to let VoiceStudio listen on "
+            f"FATAL: the operating system refused to let SpeechNexa listen on "
             f"port {_port} (permission denied). On Windows a possible cause is "
             f"a reserved port range (check "
             f"`netsh interface ipv4 show excludedportrange protocol=tcp`) or "

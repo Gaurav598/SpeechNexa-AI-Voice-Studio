@@ -1952,7 +1952,9 @@ async def dub_generate(job_id: str, req: DubRequest):
         yield f"data: {json.dumps({'type': 'done', 'segments_processed': total, 'language_code': lang_code, 'tracks': list(job['dubbed_tracks'].keys()), 'sync_scores': sync_scores, 'fit_status': fit_status, 'timing_strategy': strategy, 'seg_hashes': job.get('seg_hashes', {}), 'seg_num_step': job.get('seg_num_step', {})})}\n\n"
 
     task_id = f"dub_{job_id}_{int(time.time())}"
-    await task_manager.add_task(task_id, "dub_generate", _stream, task_id)
+    admitted = await task_manager.add_task(task_id, "dub_generate", _stream, task_id)
+    if admitted is False:
+        raise HTTPException(status_code=409, detail="A generation task with this ID already exists. Try again.")
     return {"task_id": task_id}
 
 

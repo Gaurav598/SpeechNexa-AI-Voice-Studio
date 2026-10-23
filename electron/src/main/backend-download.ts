@@ -11,7 +11,7 @@ export function resolveBackendDownloadUrl(raw: string, backendBase: string): str
     ? new URL(`${backendBase.replace(/\/+$/, '')}${appPrefixed.slice('/api'.length)}`)
     : new URL(appPrefixed);
   if (!['http:', 'https:'].includes(target.protocol) || target.origin !== backend.origin) {
-    throw new Error('Native saves must use the active VoiceStudio backend');
+    throw new Error('Native saves must use the active SpeechNexa backend');
   }
   return target.toString();
 }

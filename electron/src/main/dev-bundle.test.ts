@@ -122,7 +122,7 @@ describe('Electron binary resolution', () => {
 });
 
 describe('macOS development bundle branding', () => {
-  it('uses a VoiceStudio bundle while preserving Electron development detection', () => {
+  it('uses a SpeechNexa bundle while preserving Electron development detection', () => {
     const plan = createMacDevBundlePlan({
       electronExecutable: '/source/Electron.app/Contents/MacOS/Electron',
       electronVersion: '44.3.0',
@@ -134,11 +134,11 @@ describe('macOS development bundle branding', () => {
 
     expect(plan.sourceBundle).toBe(resolve('/source/Electron.app'));
     expect(plan.destinationBundle).toBe(
-      join(resolve('/cache'), '44.3.0-0.5.6-arm64-1024-123_5', 'VoiceStudio.app'),
+      join(resolve('/cache'), '44.3.0-0.5.6-arm64-1024-123_5', 'SpeechNexa.app'),
     );
     expect(basename(plan.destinationExecutable)).toBe('Electron');
     expect(plan.destinationExecutable).toContain(
-      join('VoiceStudio.app', 'Contents', 'MacOS', 'Electron'),
+      join('SpeechNexa.app', 'Contents', 'MacOS', 'Electron'),
     );
   });
 });

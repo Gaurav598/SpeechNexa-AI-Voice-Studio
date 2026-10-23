@@ -1,4 +1,4 @@
-# ── VoiceStudio — Model Catalog ─────────────────────────────────────
+# ── SpeechNexa — Model Catalog ─────────────────────────────────────
 #
 # This file is the source of truth for all known HuggingFace models.
 # The backend loads it at startup via `load_model_catalog()`.
@@ -40,7 +40,7 @@ models:
   # ── Required ──────────────────────────────────────────────────────────
 
   - repo_id: "k2-fsa/OmniVoice"
-    label: "VoiceStudio TTS (k2-fsa/OmniVoice, 600+ languages, zero-shot)"
+    label: "OmniVoice TTS (k2-fsa/OmniVoice, 600+ languages, zero-shot)"
     role: TTS
     engines: [omnivoice, omnivoice-subprocess]
     size_gb: 2.4

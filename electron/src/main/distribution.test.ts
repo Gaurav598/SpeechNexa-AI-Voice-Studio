@@ -40,12 +40,27 @@ describe('distribution contract', () => {
   });
 
   test('store ownership cannot be bypassed by a runtime environment variable', () => {
+    vi.stubEnv('SPEECHNEXA_ENABLE_UPDATES', '1');
+    try {
     expect(applicationUpdatesSupported(true, 'direct', false)).toBe(true);
     expect(applicationUpdatesSupported(true, 'direct', true)).toBe(false);
     expect(applicationUpdatesSupported(true, 'microsoft-store', false)).toBe(true);
     expect(applicationUpdatesSupported(true, 'snap-store', false)).toBe(false);
     expect(applicationUpdatesSupported(true, 'mac-app-store', false)).toBe(false);
     expect(applicationUpdatesSupported(false, 'direct', false)).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
+  test('migration leaves updater disabled until SpeechNexa enables its own feed', () => {
+    vi.stubEnv('SPEECHNEXA_ENABLE_UPDATES', '');
+    try {
+      expect(applicationUpdatesSupported(true, 'direct', false)).toBe(false);
+      expect(applicationUpdatesSupported(true, 'microsoft-store', false)).toBe(false);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   test('bundled-only distributions cannot invoke runtime setup downloads', () => {

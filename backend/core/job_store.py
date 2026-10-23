@@ -35,15 +35,23 @@ _EVENT_CAP_PER_JOB = 500
 # ── Lifecycle ──────────────────────────────────────────────────────────────
 
 
-def create(job_id: str, *, type: str, project_id: Optional[str] = None, meta: Optional[dict] = None) -> None:
+def create(job_id: str, *, type: str, project_id: Optional[str] = None,
+           meta: Optional[dict] = None, replace: bool = True) -> bool:
+    """Persist a job; return whether a row was written.
+
+    Task admission passes ``replace=False`` so a reused ID cannot reset a
+    completed job and mix a new run into its event history. Other callers retain their
+    existing explicit-retry behavior.
+    """
     now = time.time()
     with db_conn() as conn:
-        conn.execute(
-            "INSERT OR REPLACE INTO jobs "
+        cur = conn.execute(
+            ("INSERT OR REPLACE" if replace else "INSERT OR IGNORE") + " INTO jobs "
             "(id, type, project_id, status, created_at, updated_at, meta_json) "
             "VALUES (?, ?, ?, 'pending', ?, ?, ?)",
             (job_id, type, project_id, now, now, json.dumps(meta or {})),
         )
+        return cur.rowcount > 0
 
 
 def mark_running(job_id: str) -> None:
@@ -62,6 +70,45 @@ def mark_cancelled(job_id: str) -> None:
     _update_status(job_id, "cancelled", finished=True)
 
 
+def transition(job_id: str, *, from_statuses: tuple[str, ...], to_status: str,
+               meta_update: Optional[dict] = None, error: Optional[str] = None) -> bool:
+    """Atomically advance one job without letting a stale worker rewrite it.
+
+    Generation uses this for its finer-grained lifecycle; existing task types
+    retain their established status API. Metadata and the terminal state are
+    committed in the same SQLite transaction.
+    """
+    if not from_statuses:
+        raise ValueError("A job transition requires an allowed source state")
+    terminal = to_status in {"done", "failed", "cancelled"}
+    now = time.time()
+    with db_conn() as conn:
+        conn.execute("BEGIN IMMEDIATE")
+        row = conn.execute(
+            "SELECT type, status, meta_json FROM jobs WHERE id=?", (job_id,)
+        ).fetchone()
+        if row is None or row["status"] not in from_statuses:
+            return False
+        if row["type"] == "speech_generate":
+            legal = {
+                "pending": {"running", "failed", "cancelled"},
+                "running": {"post_processing", "failed", "cancelled"},
+                "post_processing": {"done", "failed", "cancelled"},
+            }
+            if to_status not in legal.get(row["status"], set()):
+                return False
+        meta = json.loads(row["meta_json"] or "{}")
+        if meta_update:
+            meta.update(meta_update)
+        conn.execute(
+            "UPDATE jobs SET status=?, updated_at=?, finished_at=?, error=?, meta_json=? "
+            "WHERE id=? AND status=?",
+            (to_status, now, now if terminal else None, error,
+             json.dumps(meta), job_id, row["status"]),
+        )
+    return True
+
+
 def retire_if_active(job_id: str, status: str, error: Optional[str] = None) -> bool:
     """Move a still ``pending``/``running`` job to a terminal ``status``.
 
@@ -73,7 +120,7 @@ def retire_if_active(job_id: str, status: str, error: Optional[str] = None) -> b
     with db_conn() as conn:
         cur = conn.execute(
             "UPDATE jobs SET status=?, updated_at=?, finished_at=?, error=? "
-            "WHERE id=? AND status IN ('pending', 'running')",
+            "WHERE id=? AND status IN ('pending', 'running', 'post_processing')",
             (status, now, now, error, job_id),
         )
         return cur.rowcount > 0
@@ -152,7 +199,7 @@ def list_jobs(*, status: Optional[str] = None, project_id: Optional[str] = None,
     where = []
     params = []
     if status == "active":
-        where.append("status IN ('pending', 'running')")
+        where.append("status IN ('pending', 'running', 'post_processing')")
     elif status:
         where.append("status = ?")
         params.append(status)
@@ -189,7 +236,7 @@ def sweep_orphans_on_startup() -> int:
     with db_conn() as conn:
         cur = conn.execute(
             "UPDATE jobs SET status='failed', updated_at=?, finished_at=?, error=? "
-            "WHERE status IN ('pending', 'running')",
+            "WHERE status IN ('pending', 'running', 'post_processing')",
             (now, now, msg),
         )
         n = cur.rowcount

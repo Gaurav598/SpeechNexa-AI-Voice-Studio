@@ -94,12 +94,13 @@ def test_a_wedge_does_not_blame_the_machine(mm):
     msg = mm._timeout_guidance("TTS generate", 300.0, wedged=True)
     assert "too heavy for the available compute" not in msg
     assert "not a limit of your machine" in msg
+    assert "bug in SpeechNexa" in msg
     # None of the hardware remedies: they cannot speed up a job that never ran.
     for useless in ("shorter text", "lighter engine", "VRAM", "Flush caches"):
         assert useless not in msg or "won't help" in msg
     # It must give the one thing that does help.
     assert "restart the backend" in msg.lower()
-    assert "github.com/debpalash/VoiceStudio/issues" in msg
+    assert "github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues" in msg
 
 
 def test_a_genuinely_slow_job_keeps_its_advice(mm):

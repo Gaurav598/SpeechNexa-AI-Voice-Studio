@@ -5,8 +5,12 @@ import { getBridge } from '@/components/bridge';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/popover';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { runRendererTask } from '@/lib/global-error-recovery';
-import { REPO_URL, X_URL } from '@shared/utils/contactLinks';
+import { X_URL } from '@shared/utils/contactLinks';
 import { homeContributors } from './home-contributors-data';
+
+// The roster documents imported upstream authors, so its All link must keep
+// pointing to the source repository rather than an unrelated fork history.
+const CONTRIBUTOR_SOURCE_URL = 'https://github.com/debpalash/VoiceStudio/graphs/contributors';
 
 function openProfile(event: MouseEvent<HTMLAnchorElement>) {
   const bridge = getBridge();
@@ -101,7 +105,7 @@ export function HomeContributors() {
                       className="home-contributor"
                       href={
                         login === 'all'
-                          ? `${REPO_URL}/graphs/contributors`
+                          ? CONTRIBUTOR_SOURCE_URL
                           : `https://github.com/${login}`
                       }
                       target="_blank"

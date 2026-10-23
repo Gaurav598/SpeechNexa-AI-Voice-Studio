@@ -162,7 +162,9 @@ describe('initAnalyticsFromConsent — silence is not consent', () => {
   });
 
   it('starts ONLY when the user opted in and a destination exists', async () => {
-    vi.mock('posthog-js/dist/module.slim.no-external', () => ({
+    vi.stubEnv('VITE_POSTHOG_KEY', 'phc_speechnexa_test_destination');
+    vi.resetModules();
+    vi.doMock('posthog-js/dist/module.slim.no-external', () => ({
       default: {
         init: vi.fn(),
         opt_in_capturing: vi.fn(),
@@ -172,11 +174,14 @@ describe('initAnalyticsFromConsent — silence is not consent', () => {
         capture: vi.fn(),
       },
     }));
-    const started = await initAnalyticsFromConsent(async () => ({
+    const { initAnalyticsFromConsent: initWithDestination } = await import('../utils/analytics');
+    const started = await initWithDestination(async () => ({
       available: true,
       opted_in: true,
     }));
     expect(started).toBe(true);
+    vi.doUnmock('posthog-js/dist/module.slim.no-external');
+    vi.unstubAllEnvs();
   });
 });
 

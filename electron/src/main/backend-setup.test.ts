@@ -3,7 +3,7 @@ import { beforeEach, afterEach, expect, it, onTestFinished, vi } from 'vitest';
 import { EventEmitter } from 'node:events';
 import { chmodSync, existsSync, mkdtempSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { join, resolve } from 'node:path';
 const mocks = vi.hoisted(() => ({
   runtimeConfig: null as { root: string; owned: boolean } | null,
   existingProject: false,
@@ -76,8 +76,16 @@ import {
   isUnsupportedPlatform,
   managedBackendSpawnOptions,
   platformSetupIssue,
+  selectedRuntimeRoot,
 } from './backend';
 import { app } from 'electron';
+
+it('creates a SpeechNexa runtime folder while honoring either selected app folder', () => {
+  const parent = resolve('selected');
+  expect(selectedRuntimeRoot(parent)).toBe(join(parent, 'SpeechNexa'));
+  expect(selectedRuntimeRoot(join(parent, 'SpeechNexa'))).toBe(join(parent, 'SpeechNexa'));
+  expect(selectedRuntimeRoot(join(parent, 'VoiceStudio'))).toBe(join(parent, 'VoiceStudio'));
+});
 
 beforeEach(() => {
   // Generic installation fixtures need a supported host. Intel cases override it.

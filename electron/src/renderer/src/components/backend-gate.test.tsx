@@ -242,11 +242,11 @@ it('explains unsupported Windows proxy bypass rules before retrying setup', () =
   );
   expect(screen.getByText(i18n.t('backend.proxy_bypass_help'))).toBeVisible();
   expect(i18n.t('backend.proxy_bypass_help')).toMatch(
-    /quit VoiceStudio.*launch VoiceStudio from that terminal/,
+    /quit SpeechNexa.*launch SpeechNexa from that terminal/,
   );
 });
 
-const RELEASES_URL = 'https://github.com/debpalash/VoiceStudio/releases/latest';
+const RELEASES_URL = 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/releases';
 it('sends Apple Silicon users on the Intel build to the arm64 download (#2598)', () => {
   backendStatus.setupIssue = 'wrong_architecture';
   render(
@@ -261,7 +261,7 @@ it('sends Apple Silicon users on the Intel build to the arm64 download (#2598)',
 
   expect(screen.getByText(i18n.t('backend.setup_wrong_architecture'))).toBeVisible();
   expect(
-    screen.getByRole('link', { name: i18n.t('backend.download_apple_silicon') }),
+    screen.getByRole('link', { name: i18n.t('updates.releases') }),
   ).toHaveAttribute('href', RELEASES_URL);
   expect(
     screen.queryByRole('button', { name: i18n.t('backend.setup_required') }),

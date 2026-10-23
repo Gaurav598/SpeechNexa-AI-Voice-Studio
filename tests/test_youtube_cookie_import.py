@@ -96,7 +96,7 @@ def test_ingest_recognizes_desktop_proxy_marker(
     from unittest.mock import AsyncMock
 
     monkeypatch.setattr(dub_core, "check_public_url", lambda url: url)
-    monkeypatch.setattr(dub_core, "_safe_job_dir", lambda _job: str(tmp_path))
+    monkeypatch.setattr(dub_core, "_safe_job_dir", lambda _job: str(tmp_path / "fresh-job"))
     staged = []
     cookie_path = str(tmp_path / "session.cookies.txt")
 
@@ -126,6 +126,72 @@ def test_ingest_recognizes_desktop_proxy_marker(
         assert exc.value.status_code == 403
         assert staged == []
         enqueue.assert_not_awaited()
+
+
+def test_ingest_rejects_reused_job_directory_before_staging_cookies(
+    dub_core, tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    job_dir = tmp_path / "existing-job"
+    job_dir.mkdir()
+    output = job_dir / "output.wav"
+    output.write_bytes(b"completed audio")
+    monkeypatch.setattr(dub_core, "check_public_url", lambda url: url)
+    monkeypatch.setattr(dub_core, "_safe_job_dir", lambda _job: str(job_dir))
+    staged = []
+    monkeypatch.setattr(dub_core, "_stage_cookie_export", lambda text: staged.append(text))
+    enqueue = AsyncMock()
+    monkeypatch.setattr(dub_core.task_manager, "add_task", enqueue)
+    request = SimpleNamespace(
+        url=SimpleNamespace(scheme="http"),
+        client=SimpleNamespace(host="127.0.0.1"),
+        headers={"x-voicestudio-desktop-origin": "app://voicestudio"},
+    )
+    payload = dub_core.DubIngestUrlRequest(
+        url="https://youtube.com/watch?v=abc", cookie_file=COOKIE_TEXT,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(dub_core.dub_ingest_url(payload, request))
+
+    assert exc.value.status_code == 409
+    assert output.read_bytes() == b"completed audio"
+    assert staged == []
+    enqueue.assert_not_awaited()
+
+
+def test_ingest_rejects_persisted_task_id_after_work_directory_was_removed(
+    dub_core, tmp_path, monkeypatch
+):
+    from types import SimpleNamespace
+    from unittest.mock import AsyncMock
+
+    job_dir = tmp_path / "removed-job"
+    cookie_path = tmp_path / "staged.cookies.txt"
+    cookie_path.write_text(COOKIE_TEXT)
+    monkeypatch.setattr(dub_core, "check_public_url", lambda url: url)
+    monkeypatch.setattr(dub_core, "_safe_job_dir", lambda _job: str(job_dir))
+    monkeypatch.setattr(dub_core, "_stage_cookie_export", lambda _text: str(cookie_path))
+    enqueue = AsyncMock(return_value=False)
+    monkeypatch.setattr(dub_core.task_manager, "add_task", enqueue)
+    request = SimpleNamespace(
+        url=SimpleNamespace(scheme="http"),
+        client=SimpleNamespace(host="127.0.0.1"),
+        headers={"x-voicestudio-desktop-origin": "app://voicestudio"},
+    )
+    payload = dub_core.DubIngestUrlRequest(
+        url="https://youtube.com/watch?v=abc", cookie_file=COOKIE_TEXT,
+    )
+
+    with pytest.raises(HTTPException) as exc:
+        asyncio.run(dub_core.dub_ingest_url(payload, request))
+
+    assert exc.value.status_code == 409
+    assert not job_dir.exists()
+    assert not cookie_path.exists()
+    enqueue.assert_awaited_once()
 
 
 def test_cookie_export_is_forwarded_to_ytdlp(dub_pipeline, tmp_path, monkeypatch):

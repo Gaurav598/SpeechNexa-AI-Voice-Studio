@@ -7,7 +7,7 @@ import pytest
 
 from services.cloud_sync.client import CloudOff, SyncApiError, SyncClient
 
-BASE = "https://appapi.voicestudio.sh/v1/sync"
+BASE = "http://127.0.0.1:8090/v1/sync"
 
 
 def make(handler, token="tok", device="Dv7kQ2mZx9LpR4sT"):
@@ -134,12 +134,19 @@ def test_local_development_endpoint_is_allowed():
 
 
 @pytest.mark.parametrize("base", [
-    "https://appapi.voicestudio.sh/v1/sync",
-    "https://dev-appapi.voicestudio.sh/v1/sync",
     "http://127.0.0.1:8090/v1/sync",
 ])
-def test_the_known_sync_endpoints_are_accepted(base):
+def test_only_the_local_sync_endpoint_is_accepted(base):
     assert SyncClient(base, "Or1", token=lambda: "t").base.startswith(base + "/organizations/")
+
+
+@pytest.mark.parametrize("base", [
+    "https://appapi.voicestudio.sh/v1/sync",
+    "https://dev-appapi.voicestudio.sh/v1/sync",
+])
+def test_inherited_upstream_sync_endpoints_are_refused(base):
+    with pytest.raises(ValueError):
+        SyncClient(base, "Or1", token=lambda: "t")
 
 
 def test_any_other_https_host_is_refused():

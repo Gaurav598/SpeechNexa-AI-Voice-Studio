@@ -25,7 +25,7 @@ class LocalCall:
     what: str = "GPU job"
     timeout: Optional[float] = None
     queue_timeout: Optional[float] = None
-    min_vram_gb: float = 0.0
+    min_vram_gb: float = 0.0  # Engine floor; reserves headroom while GPU work overlaps.
     on_abandon: Optional[Callable[[], None]] = None
     prepare: Optional[Callable[[], Any]] = None
 

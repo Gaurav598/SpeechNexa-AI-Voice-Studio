@@ -174,7 +174,7 @@ export function TakeDetails({ item }: { item: HistoryItem }) {
         {item.audio_path && (
           <SaveAudioButton
             url={audioUrl(item.audio_path)}
-            suggestedName={`voicestudio-${item.id}.wav`}
+            suggestedName={`speechnexa-${item.id}.wav`}
           />
         )}
         <Button variant="outline" disabled={isGenerating} onClick={() => void reuse()}>

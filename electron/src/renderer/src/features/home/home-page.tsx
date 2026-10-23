@@ -1,7 +1,4 @@
 import { HomeFeatureIcon } from './home-feature-icon';
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
-import { getBridge } from '@/components/bridge';
-import { runRendererTask } from '@/lib/global-error-recovery';
 import { HomeContributors } from './home-contributors';
 import './home-page.css';
 import { WorkspaceHeader } from '@/components/app-shell/workspace-header';
@@ -211,32 +208,7 @@ export function HomePage() {
                     id="home-new-projects"
                     className="flex flex-wrap items-center gap-x-3 gap-y-2 text-3xl font-semibold tracking-[-0.035em]"
                   >
-                    <Tooltip>
-                      <TooltipTrigger
-                        render={
-                          <a
-                            href="https://voicestudio.sh"
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="rounded-md transition-colors hover:text-primary focus-visible:outline-2 focus-visible:outline-ring"
-                            onClick={(event) => {
-                              const browser = getBridge()?.browser;
-                              if (!browser) return;
-                              event.preventDefault();
-                              event.currentTarget.focus();
-                              runRendererTask('Preview official website', () =>
-                                browser.open('https://voicestudio.sh'),
-                              );
-                            }}
-                          />
-                        }
-                      >
-                        {t('homeUi.title')}
-                      </TooltipTrigger>
-                      <TooltipContent surface="theme" side="bottom">
-                        {t('siteBrowser.preview')}
-                      </TooltipContent>
-                    </Tooltip>
+                    {t('homeUi.title')}
                   </h2>
                   <p className="mt-3 max-w-[80ch] text-sm leading-relaxed text-foreground/65">
                     {t('homeUi.subtitle')}

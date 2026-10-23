@@ -1,6 +1,6 @@
 # Model licence inventory
 
-`backend/config/model_licenses.json` records 56 configured model repositories and
+`backend/config/model_licenses.json` records 57 configured model repositories and
 seven unresolved asset families. Each record has an upstream licence label,
 commercial-use review flag, credit text, source/evidence links and review notes.
 Pinned model-card revisions identify the evidence inspected; they do not pin
@@ -44,7 +44,7 @@ their separate dependency notices.
 ## Shared disclosure chain
 
 `backend/config/models.yaml` remains the operational catalogue. The existing
-`model_licenses.json` is schema v2; its original 56 identities and seven dynamic
+`model_licenses.json` is schema v2; its 57 identities and seven dynamic
 families remain intact. The upgrade preserves observed terms, distinguishes
 evidence revisions from runtime revisions, and keeps incomplete component and
 variant provenance explicit. It does not turn the legacy false commercial flag
@@ -58,7 +58,7 @@ that all selected assets or activities are covered.
 
 `scripts/generate_model_license_data.py` generates
 [`model-license-data.json`](model-license-data.json) from the same registry and
-catalogue without importing engines or downloading models. It includes all 56
+catalogue without importing engines or downloading models. It includes all 57
 inventory rows, including dependencies outside the visible catalogue, the
 dynamic families, registry version/digest and source provenance. The website
 vendors these exact bytes as `public/model-license-data.json`, with the immutable

@@ -18,10 +18,10 @@ describe('native backend downloads', () => {
       `${backend}/exports/take.wav`,
     );
     expect(() => resolveBackendDownloadUrl('https://attacker.example/take.wav', backend)).toThrow(
-      'active VoiceStudio backend',
+      'active SpeechNexa backend',
     );
     expect(() => resolveBackendDownloadUrl('file:///tmp/take.wav', backend)).toThrow(
-      'active VoiceStudio backend',
+      'active SpeechNexa backend',
     );
   });
 });

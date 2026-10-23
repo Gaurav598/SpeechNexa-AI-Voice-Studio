@@ -74,6 +74,7 @@ function emit(event: string, value?: unknown) {
 
 describe('DesktopUpdater', () => {
   beforeEach(() => {
+    vi.stubEnv('SPEECHNEXA_ENABLE_UPDATES', '1');
     mocks.handlers.clear();
     mocks.ipcHandlers.clear();
     mocks.disk.channel = undefined;
@@ -101,7 +102,7 @@ describe('DesktopUpdater', () => {
     expect(mocks.autoUpdater.channel).toBe(`electron-stable-${process.platform}-${process.arch}`);
     expect(mocks.autoUpdater.setFeedURL).toHaveBeenLastCalledWith({
       provider: 'generic',
-      url: 'https://github.com/debpalash/VoiceStudio/releases/latest/download',
+      url: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/releases/latest/download',
       channel: `electron-stable-${process.platform}-${process.arch}`,
     });
 
@@ -144,7 +145,7 @@ describe('DesktopUpdater', () => {
     expect(mocks.autoUpdater.channel).toBe(channel);
     expect(mocks.autoUpdater.setFeedURL).toHaveBeenLastCalledWith({
       provider: 'generic',
-      url: 'https://github.com/debpalash/VoiceStudio/releases/download/v0.5.7',
+      url: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/releases/download/v0.5.7',
       channel,
     });
   });
@@ -236,7 +237,7 @@ describe('DesktopUpdater', () => {
     expect(mocks.autoUpdater.allowDowngrade).toBe(false);
     expect(mocks.autoUpdater.setFeedURL).toHaveBeenLastCalledWith({
       provider: 'generic',
-      url: 'https://github.com/debpalash/VoiceStudio/releases/latest/download',
+      url: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/releases/latest/download',
       channel: `electron-stable-${process.platform}-${process.arch}`,
     });
     expect(updater).not.toHaveProperty('setChannel');
@@ -362,9 +363,9 @@ describe('DesktopUpdater', () => {
       },
     ]);
     expect(fetcher).toHaveBeenCalledWith(
-      expect.stringContaining('/debpalash/VoiceStudio/releases?per_page=30'),
+      expect.stringContaining('/Gaurav598/SpeechNexa-AI-Voice-Studio/releases?per_page=30'),
       expect.objectContaining({
-        headers: expect.objectContaining({ 'User-Agent': 'VoiceStudio' }),
+        headers: expect.objectContaining({ 'User-Agent': 'SpeechNexa' }),
         signal: expect.any(AbortSignal),
       }),
     );

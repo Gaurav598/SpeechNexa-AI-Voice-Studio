@@ -1,9 +1,9 @@
 {
-  "name": "voicestudio-electron",
+  "name": "speechnexa-electron",
   "version": "0.0.0-electron",
   "private": true,
-  "description": "VoiceStudio desktop shell (Electron) - local voice cloning, no cloud.",
-  "homepage": "https://github.com/debpalash/VoiceStudio",
+  "description": "SpeechNexa desktop and web speech studio (Electron).",
+  "homepage": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio",
   "license": "AGPL-3.0-only",
   "author": {
     "name": "VoiceStudio contributors",

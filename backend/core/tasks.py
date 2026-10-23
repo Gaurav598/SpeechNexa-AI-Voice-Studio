@@ -66,6 +66,20 @@ class TaskManager:
 
     async def add_task(self, task_id, task_type, func, *args, project_id=None, meta=None, **kwargs):
         self._init_queue()
+        # IDs are one-shot admission keys. Replacing a live entry leaves two
+        # queue items pointing at the newer callable; replacing a persisted
+        # row resets its status and mixes old SSE events with a new run.
+        if task_id in self.active_tasks:
+            return False
+        try:
+            created = job_store.create(
+                task_id, type=task_type, project_id=project_id,
+                meta=meta, replace=False,
+            )
+            if created is False:
+                return False
+        except Exception:
+            logger.exception("job_store.create failed (non-fatal); in-memory task still runs")
         task_obj = {
             "status": "pending",
             "type": task_type,
@@ -77,11 +91,10 @@ class TaskManager:
             "cancelled": False,
         }
         self.active_tasks[task_id] = task_obj
-        try:
-            job_store.create(task_id, type=task_type, project_id=project_id, meta=meta)
-        except Exception:
-            logger.exception("job_store.create failed (non-fatal); in-memory task still runs")
-        await self.queue.put((task_id, func, args, kwargs))
+        # An unbounded queue's put_nowait is atomic with the in-memory
+        # reservation: concurrent requests cannot slip between the two.
+        self.queue.put_nowait((task_id, func, args, kwargs))
+        return True
 
     def cancel_task(self, task_id):
         if task_id in self.active_tasks:

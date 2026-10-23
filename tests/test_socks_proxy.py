@@ -215,7 +215,7 @@ def test_generate_500_detail_carries_socks_hint(client, monkeypatch):
     detail = r.json()["detail"]
     assert _SOCKS_MSG not in detail
     assert detail.startswith(
-        "VoiceStudio hit an internal error; check the backend log for details."
+        "SpeechNexa hit an internal error; check the backend log for details."
     )
     assert "unset ALL_PROXY/HTTPS_PROXY" in detail
     assert r.json()["docs_topic"] == "SOCKS_PROXY_SUPPORT_MISSING"

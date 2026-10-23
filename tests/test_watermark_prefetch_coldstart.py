@@ -535,6 +535,7 @@ def test_failed_generator_load_is_not_retried_on_every_embed(monkeypatch, waterm
     monkeypatch.setitem(sys.modules, "audioseal", fake)
     monkeypatch.setattr(watermark, "is_enabled", lambda: True)
     monkeypatch.setattr(watermark, "_check_available", lambda: True)
+    monkeypatch.setattr(watermark, "_generator_checkpoint_cached", lambda: True)
 
     audio = _torch.zeros(1, 2400)
     assert watermark.embed_watermark(audio, 24000) is audio

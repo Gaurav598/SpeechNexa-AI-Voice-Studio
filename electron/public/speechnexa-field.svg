@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 360" fill="none">
+  <defs>
+    <linearGradient id="canvas" x1="0" y1="0" x2="1200" y2="360" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#0C1A2A"/>
+      <stop offset="1" stop-color="#1B2950"/>
+    </linearGradient>
+    <linearGradient id="trace" x1="175" y1="280" x2="1100" y2="62" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#5DE7CC" stop-opacity="0"/>
+      <stop offset=".52" stop-color="#5DE7CC" stop-opacity=".65"/>
+      <stop offset="1" stop-color="#8BACFF" stop-opacity=".25"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(865 160) rotate(90) scale(250 340)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#42D6C6" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#42D6C6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="1200" height="360" fill="url(#canvas)"/>
+  <rect width="1200" height="360" fill="url(#glow)"/>
+  <g stroke="url(#trace)" stroke-width="2.5" stroke-linecap="round">
+    <path d="M80 184c80 0 100-80 180-80s100 152 180 152 100-124 180-124 100 90 180 90 100-142 180-142 100 104 180 104"/>
+    <path d="M80 212c80 0 100-54 180-54s100 112 180 112 100-90 180-90 100 60 180 60 100-106 180-106 100 78 180 78" opacity=".5"/>
+    <path d="M80 156c80 0 100-108 180-108s100 190 180 190 100-158 180-158 100 116 180 116 100-172 180-172 100 132 180 132" opacity=".35"/>
+  </g>
+  <g fill="#8BACFF" opacity=".65">
+    <circle cx="260" cy="104" r="4"/>
+    <circle cx="620" cy="132" r="4"/>
+    <circle cx="980" cy="80" r="4"/>
+  </g>
+</svg>

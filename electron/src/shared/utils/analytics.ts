@@ -7,7 +7,7 @@
  *
  * That is wrong for this app, twice over, and the reasons are not theoretical:
  *
- * 1. **It would track everyone immediately, before consent.** VoiceStudio's whole
+ * 1. **It would track everyone immediately, before consent.** SpeechNexa's whole
  *    promise is that a default install sends nothing (Settings → Privacy is OFF
  *    until you turn it on; see backend/core/analytics.py). Initialising at load
  *    would make the app's own README a lie. So init happens ONLY after the user
@@ -29,19 +29,8 @@
  */
 import { scrubText } from './scrub';
 
-/**
- * In-repo default destination (owner-sanctioned reversal, #1193): source builds
- * get the SAME consent-gated analytics as installers. This is a PostHog
- * *publishable* client key — write-only event ingestion, no data access;
- * PostHog's own FAQ says these are designed to ship in client code — NOT a
- * secret. It only names a destination: nothing is ever sent without the user's
- * explicit opt-in (init happens only after consent, see enableAnalytics()).
- * A build-time VITE_POSTHOG_KEY (release builds; developers pointing at their
- * own project) always wins over it — mirrors backend/core/analytics.py.
- * tests/test_no_committed_analytics_token.py pins that a `phc_` literal may
- * live in exactly this file and backend/core/analytics.py.
- */
-const PUBLIC_PROJECT_TOKEN = 'phc_kJK9nFqtwFmB4CYWS4bMDTY7z9P4KCRyiRT7CzJTXm9f'; // gitleaks:allow — publishable write-only key (#1193)
+/** No inherited analytics destination; a deployment must set its own token. */
+const PUBLIC_PROJECT_TOKEN = '';
 const POSTHOG_TOKEN: string = (import.meta.env?.VITE_POSTHOG_KEY as string) || PUBLIC_PROJECT_TOKEN;
 const POSTHOG_HOST: string =
   (import.meta.env?.VITE_POSTHOG_HOST as string) || 'https://us.i.posthog.com';

@@ -253,6 +253,17 @@ def _generator_checkpoint_cached() -> bool:
     return (root / "audioseal" / "generator_base.pth").is_file()
 
 
+def _generator_ready_without_download() -> bool:
+    """Only use optional AudioSeal when its model is already local or loaded.
+
+    AudioSeal.load_generator downloads a checkpoint when the cache is empty.
+    Startup prefetch already avoids that path; synthesis must make the same
+    decision before it reaches the lazy loader, including for forced marks.
+    An explicit prefetch with ``allow_download=True`` can still install it.
+    """
+    return _generator is not None or _generator_checkpoint_cached()
+
+
 def prefetch_generator(*, allow_download: bool = False) -> None:
     """Warm the AudioSeal generator eagerly (startup background thread).
 
@@ -267,7 +278,10 @@ def prefetch_generator(*, allow_download: bool = False) -> None:
     ``OMNIVOICE_PRELOAD_WATERMARK=1``.
     """
     try:
-        if not will_mark():
+        # Explicit prefetch may install the checkpoint; ordinary embedding is
+        # cache-only. Do not use will_mark() here because it is false before
+        # an explicitly authorized first download.
+        if not is_enabled() or not _check_available():
             logger.debug("Watermark prefetch skipped (disabled or audioseal absent)")
             return
         if not allow_download and not _generator_checkpoint_cached():
@@ -332,7 +346,7 @@ def will_mark() -> bool:
     rendered audio fold this into their cache keys so a clip rendered while
     marking was off/unavailable can never be served for a request made while
     marking is on (see audiobook.py's chapter cache, #1169)."""
-    return is_enabled() and _check_available()
+    return is_enabled() and _check_available() and _generator_ready_without_download()
 
 
 def is_visible_audio_enabled() -> bool:
@@ -503,7 +517,11 @@ def embed_watermark(
     Returns:
         Watermarked waveform (same shape as input).
     """
-    if (not force and not is_enabled()) or not _check_available():
+    if (
+        (not force and not is_enabled())
+        or not _check_available()
+        or not _generator_ready_without_download()
+    ):
         return waveform
 
     try:

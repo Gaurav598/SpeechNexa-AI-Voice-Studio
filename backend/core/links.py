@@ -38,7 +38,7 @@ def _from_pyproject() -> Optional[str]:
 
 
 def _resolve() -> str:
-    return _from_pyproject() or "https://github.com/debpalash/VoiceStudio"
+    return _from_pyproject() or "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
 
 
 PROJECT_REPO_URL: str = _resolve()

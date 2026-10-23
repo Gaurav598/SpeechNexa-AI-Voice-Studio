@@ -19,6 +19,7 @@ build/
 #  Node / Turborepo / Tauri
 # ─────────────────────────────────────────────────────────────────────────
 node_modules/
+.bun-cache/
 node_modules
 .turbo/
 bun.lockb

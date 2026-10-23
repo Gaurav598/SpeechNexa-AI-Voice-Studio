@@ -918,7 +918,7 @@ async def dub_upload(
 
     filename = video.filename or f"video{ext}"
     task_id = f"prep_{job_id}"
-    await task_manager.add_task(
+    admitted = await task_manager.add_task(
         task_id, "prep",
         _ingest_gen, job_id, job_dir,
         {
@@ -929,6 +929,9 @@ async def dub_upload(
         },
         filename,
     )
+    if admitted is False:
+        _discard_upload()
+        raise HTTPException(status_code=409, detail="This job ID is already in use. Start a new upload.")
     return JSONResponse(
         status_code=202,
         content={"job_id": job_id, "task_id": task_id, "filename": filename},
@@ -973,8 +976,18 @@ async def dub_ingest_url(req: DubIngestUrlRequest, request: Request):
             status_code=403,
             detail="Cookie exports require HTTPS or the local desktop app.",
         )
-    os.makedirs(job_dir, exist_ok=True)
-    cookie_path = _stage_cookie_export(req.cookie_file)
+    try:
+        # The directory is the reservation shared with file uploads. A retry
+        # with an old ID must never let yt-dlp replace a completed source or
+        # render in that work directory.
+        os.makedirs(job_dir, exist_ok=False)
+    except FileExistsError:
+        raise HTTPException(status_code=409, detail="This job ID is already in use. Start a new import.") from None
+    try:
+        cookie_path = _stage_cookie_export(req.cookie_file)
+    except BaseException:
+        os.rmdir(job_dir)  # Only this request's fresh, empty reservation.
+        raise
 
     task_id = f"prep_{job_id}"
     source = {
@@ -986,17 +999,23 @@ async def dub_ingest_url(req: DubIngestUrlRequest, request: Request):
         "source_lang": source_lang_override,
     }
     try:
-        await task_manager.add_task(
+        admitted = await task_manager.add_task(
             task_id, "prep",
             _ingest_gen, job_id, job_dir,
             source, None,
         )
+        if admitted is False:
+            raise HTTPException(status_code=409, detail="This job ID is already in use. Start a new import.")
     except Exception:
         if cookie_path:
             try:
                 os.unlink(cookie_path)
             except OSError:
                 pass  # Best effort: do not hide the task-enqueue failure.
+        try:
+            os.rmdir(job_dir)
+        except OSError:
+            pass  # Preserve work created by a task that started concurrently.
         raise
     return JSONResponse(
         status_code=202,

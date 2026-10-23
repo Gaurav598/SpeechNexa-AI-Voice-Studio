@@ -1,161 +1,88 @@
-<div align="center">
-  <img src="docs/logo.png" alt="VoiceStudio" width="88" />
-  <h1>VoiceStudio</h1>
-  <p>
-    <a href="https://trendshift.io/repositories/28176?utm_source=repository-badge&amp;utm_medium=badge&amp;utm_campaign=badge-repository-28176" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/repositories/28176" alt="VoiceStudio ranking on Trendshift" width="220" height="48" /></a>
-  </p>
-  <p><strong>Open-source voice cloning, voice design, video dubbing, dictation, transcription & audiobook creation in 646 languages.</strong></p>
-  <p>
-    <a href="https://voicestudio.sh/?utm_source=github&utm_medium=readme&utm_campaign=project">Website</a> ·
-    <a href="https://github.com/debpalash/VoiceStudio/releases/latest">Download</a> ·
-    <a href="#get-started">Get started</a> ·
-    <a href="#documentation">Docs</a> ·
-    <a href="https://discord.gg/bzQavDfVV9">Discord</a> ·
-    <a href="README_CN.md">简体中文</a> ·
-    <a href="README_JA.md">日本語</a>
-  </p>
-  <p>
-    <a href="https://github.com/debpalash/VoiceStudio/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/debpalash/VoiceStudio/ci.yml?branch=main" alt="CI" /></a>
-    <a href="https://github.com/debpalash/VoiceStudio/releases/latest"><img src="https://img.shields.io/github/v/release/debpalash/VoiceStudio" alt="Latest release" /></a>
-    <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue" alt="AGPL-3.0" /></a>
-    <a href="https://supermetry.com"><img src="https://app.supermetry.com/px/zfjiv7psp4ed.svg?c=VoiceStudio&style=stats" alt="views" /></a>
-  </p>
-</div>
+# SpeechNexa
 
-![A tour of the Electron app: voice cloning, voice design, dubbing, and model management](docs/media/electron/voicestudio.gif)
+**SpeechNexa — AI Voice Generation & Speech Studio** is a local-first Electron and FastAPI application for speech generation and related audio workflows. It is an [AGPL-3.0-only](LICENSE) derivative of [VoiceStudio](UPSTREAM.md). Speech engines and weights retain their own authors and licenses.
 
-## Your voice. Your workflow.
+> Migration in progress. The locally verified speech path is English text-to-speech with KittenTTS on an Apple M4 Mac. See [implementation status](docs/IMPLEMENTATION_STATUS.md) for exact tests, publication state, and remaining gaps. Other inherited engines and platforms require separate installation and verification.
 
-| Create | Produce | Connect |
-| :--- | :--- | :--- |
-| Clone a voice or design your own | Dub videos with timed speech | Local API & MCP for agents |
-| Dictate with a floating widget | Stories, audiobooks & batch jobs | Reusable recipes & watch folders |
+## Supported path
 
-Start with **VoiceStudio** (default, powered by k2-fsa/OmniVoice), or choose another engine. [Features & engine catalog](docs/feature-catalog.md).
+- Electron studio with text entry, engine readiness, preset voices, generation progress, cancellation controls, take history, WAV playback and export.
+- FastAPI speech generation and audio retrieval on loopback, with SQLite generation history.
+- Real KittenTTS inference through `POST /generate`: 24 kHz mono WAV generated, saved, retrieved and decoded in an offline smoke test.
+- Shared GPU worker path with bounded execution and memory reservations when dedicated VRAM can be measured. Unknown VRAM remains advisory; no GPU preemption is claimed.
+- Optional AudioSeal watermarking uses an already installed checkpoint. Ordinary offline synthesis does not fetch it.
 
-Local workflows run on your hardware. Remote services are optional; usage analytics requires consent.
+The imported application includes other workflows (cloning, dictation, dubbing, audiobooks, and more engines). Their availability depends on each engine and model installation. This migration has not verified every combination. The inherited [feature catalog](docs/feature-catalog.md) inventories those paths; it is not a SpeechNexa acceptance-test list.
 
-<details>
-<summary><strong>Explore the workspaces</strong> · Clone, dub, design & models</summary>
+## Local setup
 
-<table>
-  <tr>
-    <td><img src="docs/media/electron/voice-cloning.png" alt="Electron voice cloning workspace with the bundled demo voice" width="100%" /></td>
-    <td><img src="docs/media/electron/dubbing.png" alt="Electron video dubbing workspace" width="100%" /></td>
-  </tr>
-  <tr><td align="center">Voice cloning</td><td align="center">Video dubbing</td></tr>
-  <tr>
-    <td><img src="docs/media/electron/voice-design.png" alt="Describe a voice in the Electron voice design workspace" width="100%" /></td>
-    <td><img src="docs/media/electron/models.png" alt="Install and manage local speech models" width="100%" /></td>
-  </tr>
-  <tr><td align="center">Voice design</td><td align="center">Local models</td></tr>
-</table>
-
-<img width="2628" height="1950" alt="VoiceStudio desktop workspace" src="https://github.com/user-attachments/assets/b474497d-a453-49a3-a2dd-f023ec6b7659" />
-
-</details>
-
-## Get started
-
-### One-command install (macOS / Linux)
-
-```sh
-# Latest Electron release
-curl -fsSL https://voicestudio.sh/install | sh
-
-# A specific published Electron release (replace X.Y.Z)
-curl -fsSL https://voicestudio.sh/install | sh -s -- --version X.Y.Z
-
-# Build current main and install the desktop app
-curl -fsSL https://voicestudio.sh/install | sh -s -- --main
-
-# Uninstall the app, keeping your data
-curl -fsSL https://voicestudio.sh/install | sh -s -- --uninstall
-```
-
-On Windows, run `irm https://voicestudio.sh/install | iex` in PowerShell.
-
-If `voicestudio.sh/install` is unreachable or returns 404, run the same script
-straight from the repository, or clone it and run `scripts/install.sh`:
+Requirements for the verified source workflow: Python 3.11, [uv](https://docs.astral.sh/uv/), Bun matching `package.json`, and a system able to run the existing KittenTTS ONNX CPU adapter. The smoke test used an Apple M4 Mac with 16 GB RAM. No cloud API key is required.
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/debpalash/VoiceStudio/main/scripts/install.sh | sh
+git clone https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio.git
+cd SpeechNexa-AI-Voice-Studio
+uv sync --locked --python 3.11
+bun install --frozen-lockfile
 ```
 
-Release downloads require curl and a SHA-256 tool. `--main` requires Git,
-Node.js 22+, Bun, Rust/Cargo, and platform build tools; see
-[installer prerequisites and behavior](docs/install/script.md).
-The installer preserves your settings, projects, and models. Older versions
-must contain Electron packages; it never falls back to archived Tauri builds.
-
-Or download from [Releases](https://github.com/debpalash/VoiceStudio/releases/latest) (macOS `.dmg`, Windows `.exe`, Linux `.AppImage` or `.deb`) and follow your platform guide:
-
-**[macOS](docs/install/macos.md) · [Windows](docs/install/windows.md) · [Linux](docs/install/linux.md) · [Docker](docs/install/docker.md)**
-
-| Hardware | Support |
-|---|---|
-| NVIDIA GPU (Windows / Linux) | CUDA acceleration |
-| Apple Silicon | Metal (MPS) acceleration |
-| No dedicated GPU (Intel/AMD integrated graphics, older PCs) | Fully usable on the CPU, slower; setup installs the small CPU build of PyTorch (about 5 GB free disk) |
-| Windows on ARM (Snapdragon X etc.) | **Experimental**, validation pending: native ARM64 app, x64 Python backend under emulation, CPU only |
-| Intel Mac | App UI only; connect to a remote backend ([why](docs/install/macos.md)) |
-
-Open **Voice cloning**, choose a voice or add a clean reference recording, enter your text, and generate. Install the required model when prompted. Hardware needs vary by engine; see [performance](docs/performance.md).
-
-### Install with prompt
-
-Paste into your coding agent (Claude Code, Codex, Cursor, …):
-
-```text
-Install the VoiceStudio Electron app on this device and verify it works, following
-https://github.com/debpalash/VoiceStudio/blob/main/docs/install/agent.md
-```
-
-The [agent guide](docs/install/agent.md) covers hardware detection, reusing existing
-data, asking before model downloads, and a test generation. Agents that support skills
-can also run `npx skills add debpalash/VoiceStudio`.
-
-<details>
-<summary><strong>Run the Electron preview from source</strong></summary>
+Install the small KittenTTS model only after reviewing its [model card](https://huggingface.co/KittenML/kitten-tts-mini-0.8) and the [model licensing notes](docs/MODEL_LICENSING.md). This explicit download goes into your local Hugging Face cache; weights are not stored in this repository.
 
 ```bash
-git clone https://github.com/debpalash/VoiceStudio.git
-cd VoiceStudio
-bun install
-bun run setup:api  # prepare Python dependencies before starting Electron
-bun run dev
+uv run python -c 'from huggingface_hub import snapshot_download; snapshot_download("KittenML/kitten-tts-mini-0.8", revision="c02725660cea441db4c383af69f1f26f5cd00947")'
 ```
 
-See [Electron setup](electron/README.md) for prerequisites and backend configuration.
+Start the backend and Electron studio in separate terminals:
 
-Use `bun run smoke-test` to build and launch an isolated packaged Electron app.
-Add `-- --install` for the networked managed-runtime installation check.
+```bash
+OMNIVOICE_TTS_BACKEND=kittentts HF_HUB_OFFLINE=1 uv run python backend/main.py
+bun run dev:desktop
+```
 
-</details>
+The backend listens on `127.0.0.1:3900` by default. In the studio, enter English text, choose KittenTTS and a preset voice, generate, then play or export the WAV from the take panel. Existing `OMNIVOICE_*` settings remain compatibility aliases while the imported backend is migrated; new project-owned settings use `SPEECHNEXA_*` where implemented.
 
-> **Electron is the only desktop app and web UI.** Version 0.5.3 was the final Tauri release. Existing Tauri users must [install Electron separately](docs/electron-migration.md). The retired Tauri shell and legacy UI entry points have been removed.
+### API example
 
-## Documentation
+```bash
+curl --fail-with-body -o speech.wav \
+  -F 'text=SpeechNexa generates speech locally.' \
+  -F 'engine=kittentts' \
+  -F 'preset_voice=expr-voice-2-f' \
+  -F 'language=en' \
+  http://127.0.0.1:3900/generate
+```
 
-| Need | Start here |
-|---|---|
-| Setup help | [Troubleshooting](docs/install/troubleshooting.md) · [Model downloads](docs/downloading-models.md) |
-| Models & audio quality | [Engine guides](docs/engines/README.md) · [Benchmarks](docs/benchmarks.md) |
-| Integrations | [Local API](docs/speech-platform.md) · [MCP](docs/mcp.md) · [Examples](examples/README.md) |
-| Phone companion (preview) | [iOS and Android apps](docs/mobile.md) |
-| Development | [Contributing](.github/CONTRIBUTING.md) ([CLA signing guidance](.github/CONTRIBUTING.md#contribution-licensing) for your first PR) · [Electron](electron/README.md) · [Changelog](CHANGELOG.md) |
+The response is a WAV file. Its `X-Audio-Id` header identifies the persisted take, and `X-Job-Id` identifies its job. `GET /history` lists recent takes, `GET /audio/<id>.wav` retrieves the saved bytes, and `GET /jobs/<id>` shows the job state. API docs are available at `/docs` while the backend runs. Loopback binding is the safe default; public exposure needs separate authentication and network review.
 
-Agent skills: `npx skills add debpalash/VoiceStudio` — choose **voicestudio** for audio workflows or **voicestudio-maintainer** for repository maintenance.
+## Verify real speech
 
-## Sponsors
+After installing the model, run the real offline API smoke test. It starts a temporary backend and database, generates speech through FastAPI, checks the waveform and history, verifies byte identical export, and confirms the optional AudioSeal checkpoint was not downloaded:
 
-<a href="https://forms.gle/2PYCvd39hbwijzX37"><img src="docs/media/sponsor-slot.svg" alt="Your brand — apply for a featured VoiceStudio sponsor slot" width="640" /></a>
+```bash
+uv run python scripts/smoke_real_tts.py \
+  --hf-home "${HF_HOME:-$HOME/.cache/huggingface}" \
+  --output /tmp/speechnexa-smoke.wav
+```
 
-**Become a featured partner.** [Apply for a paid placement](https://forms.gle/2PYCvd39hbwijzX37) · [Email us](mailto:partner@voicestudio.sh)
+Play the output file with your system audio player. This test uses the real model and is separate from deterministic CI adapters. It requires an installed KittenTTS model and never installs one itself.
 
-Support development: [GitHub Sponsors](https://github.com/sponsors/debpalash) · [Ko-fi](https://ko-fi.com/debpalash) · [PayPal](https://paypal.me/palashCoder) · [Sponsorship details](SPONSORS.md)
+For repeated fresh-process API measurements, run `uv run python scripts/benchmark_real_tts.py --hf-home "${HF_HOME:-$HOME/.cache/huggingface}" --output-dir /tmp/speechnexa-benchmark --samples 3`. See [performance notes](docs/performance.md) for what the timing includes.
 
-## License & responsible use
+```bash
+HF_HUB_OFFLINE=1 HF_HUB_CACHE=/tmp/speechnexa-empty-cache uv run pytest -q tests/test_watermark_offline_checkpoint.py
+bun run --cwd electron typecheck
+bun run --cwd electron test
+bun run --cwd electron build
+bun run --cwd electron build:web
+```
 
-[AGPL-3.0](LICENSE) covers the application, including commercial use under its conditions. Model weights, tokenizers, voices and generated-output conditions are separate; a paid app licence does not grant those rights. Clone voices only with permission. Model Manager now shows versioned model-source notices, evidence links and unresolved review gaps from the [shared inventory](docs/licensing/model-inventory.md). Its optional [reviewed-file preview](docs/licensing/model-review-workflow.md) does not enforce ordinary downloads or certify commercial permission. See [license details](LICENSE-NOTICE.md).
+## Architecture and scope
 
+The React renderer calls FastAPI. The backend validates requests and engine licenses, selects an installed adapter, coordinates model and worker resources, runs inference, validates and stores audio, and exposes history and retrieval. See [architecture](docs/ARCHITECTURE.md), [inference orchestration](docs/INFERENCE_ORCHESTRATION.md), [API](docs/API.md), and [testing](docs/TESTING.md).
+
+The active desktop and web UI is Electron. Inherited native iOS and Android projects are separate source trees and outside this verified first release. Publishing, stores, Docker releases, and upstream account services are disabled until independently configured and tested.
+
+## Licensing and security
+
+Application source stays AGPL-3.0-only, including its network source-sharing obligations. [UPSTREAM.md](UPSTREAM.md) records provenance; [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [docs/MODEL_LICENSING.md](docs/MODEL_LICENSING.md) describe separate code and model terms. Review applicable terms before commercial use or redistribution. Downloaded model weights, generated audio and personal recordings are excluded from Git.
+
+The default application is local-first. Model installation is explicit; inherited account, analytics and update integrations are disabled or gated for SpeechNexa. See [security notes](docs/SECURITY.md) and [current limitations](docs/IMPLEMENTATION_STATUS.md).

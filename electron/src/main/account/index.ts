@@ -42,7 +42,7 @@ async function wireAccount(opts: StartOptions): Promise<() => void> {
   const available = cloudAccountsAvailable(app.isPackaged);
   const env = resolveCloudEnvironment({
     packaged: app.isPackaged,
-    requested: process.env.VOICESTUDIO_CLOUD_ENV,
+    requested: available ? 'local' : process.env.VOICESTUDIO_CLOUD_ENV,
   });
   const switches = new CloudSwitchStore(join(app.getPath('userData'), 'cloud-switches.json'));
   const allowed = () => available && switches.get().accountEnabled;

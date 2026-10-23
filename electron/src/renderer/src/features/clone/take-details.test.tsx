@@ -43,7 +43,7 @@ it('exports a historical take through the native save dialog', async () => {
   await waitFor(() =>
     expect(mock.saveAudio).toHaveBeenCalledWith({
       url: '/audio/history/take-42.wav',
-      suggestedName: 'voicestudio-take-42.wav',
+      suggestedName: 'speechnexa-take-42.wav',
     }),
   );
 });

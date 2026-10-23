@@ -34,13 +34,14 @@ import { cn } from '@/lib/utils';
 import type { RuntimeRegion } from '../../../preload/index.d';
 import { getBridge, isMac } from './bridge';
 import { ExternalLink } from './external-link';
+import { REPO_URL } from '@shared/utils/contactLinks';
 
 interface BackendGateProps {
   children: ReactNode;
   repairDock?: ReactNode;
 }
 
-const RELEASES_URL = 'https://github.com/debpalash/VoiceStudio/releases/latest';
+const RELEASES_URL = `${REPO_URL}/releases`;
 const RETRYABLE = new Set(['crashed', 'failed', 'port_in_use']);
 const SETUP_PHASES = ['checking', 'downloading_uv', 'installing_deps', 'verifying'] as const;
 
@@ -517,7 +518,7 @@ export function BackendGate({ children, repairDock }: BackendGateProps) {
               )}
               {wrongArchitecture && (
                 <ExternalLink href={RELEASES_URL}>
-                  {t('backend.download_apple_silicon')}
+                  {t('updates.releases')}
                 </ExternalLink>
               )}
               {!unsupportedPlatform && !wrongArchitecture && (
@@ -572,13 +573,13 @@ export function BackendGate({ children, repairDock }: BackendGateProps) {
                 </Button>
               )}
               <AgentFixButton
-                request={`Restore the VoiceStudio local backend. Current stage: ${status.stage}.${delimitedDiagnostic(status.message)} Inspect Electron status, restart or resume runtime setup as needed, wait until the backend is ready, and verify health. Do not clean reinstall or change user consent.`}
+                request={`Restore the SpeechNexa local backend. Current stage: ${status.stage}.${delimitedDiagnostic(status.message)} Inspect Electron status, restart or resume runtime setup as needed, wait until the backend is ready, and verify health. Do not clean reinstall or change user consent.`}
               />
             </div>
           ) : null}
           {setupFailed ? (
             <AgentFixButton
-              request={`Resume and repair the interrupted VoiceStudio runtime setup. Current issue: ${status.setupIssue || 'unknown'}.${delimitedDiagnostic(status.message)} Use the Electron runtime setup control, wait for completion, and verify backend health. Do not clean reinstall or change user consent.`}
+              request={`Resume and repair the interrupted SpeechNexa runtime setup. Current issue: ${status.setupIssue || 'unknown'}.${delimitedDiagnostic(status.message)} Use the Electron runtime setup control, wait for completion, and verify backend health. Do not clean reinstall or change user consent.`}
             />
           ) : null}
           {status.logTail.length > 0 ? (

@@ -56,5 +56,7 @@ export function cloudOrigins(env: CloudEnvironment): Set<string> {
  * time, so releases ship it dark until the vssaas production API launches.
  */
 export function cloudAccountsAvailable(packaged: boolean): boolean {
-  return !packaged || (typeof __CLOUD_ACCOUNTS__ === 'boolean' && __CLOUD_ACCOUNTS__);
+  // Only an explicitly requested local integration test can use this code.
+  // The old packaged flag and saved switches cannot revive upstream Cloud.
+  return !packaged && process.env.SPEECHNEXA_ENABLE_LOCAL_ACCOUNT_TESTING === '1';
 }

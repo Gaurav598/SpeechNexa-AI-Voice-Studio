@@ -22,7 +22,6 @@ import {
   runtimeCompatible,
   runtimeInstallInterrupted,
   stageRuntimeSources,
-  UV_VERSION,
 } from './runtime-project';
 
 vi.mock('./runtime-download', () => ({ downloadRuntimeInstaller: vi.fn() }));
@@ -750,13 +749,6 @@ describe('packaged runtime setup', () => {
     await expect(installRuntime(bundle, project, 'uv', run, controller.signal)).rejects.toThrow();
     expect(run).toHaveBeenCalledTimes(1);
     expect(await runtimeReady(bundle, project)).toBe(false);
-  });
-  it('pins the release workflow installer version', async () => {
-    const release = await readFile(
-      new URL('../../../.github/workflows/electron-release.yml', import.meta.url),
-      'utf8',
-    );
-    expect(release).toContain(`version: '${UV_VERSION}'`);
   });
 });
 

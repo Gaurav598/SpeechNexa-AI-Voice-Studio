@@ -18,7 +18,8 @@ export function applicationUpdatesSupported(
   return (
     packaged &&
     DISTRIBUTION_PROFILES[target].applicationUpdates === 'application' &&
-    !disabledByEnvironment
+    !disabledByEnvironment &&
+    process.env.SPEECHNEXA_ENABLE_UPDATES === '1'
   );
 }
 

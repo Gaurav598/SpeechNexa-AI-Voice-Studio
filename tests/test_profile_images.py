@@ -95,6 +95,7 @@ def test_blocked_google_search_falls_back_to_safe_openverse_thumbnails(
             return httpx.Response(status, text=page)
         assert request.url.host == "api.openverse.org"
         if request.url.path == "/v1/images/":
+            assert request.headers["user-agent"].startswith("SpeechNexa ")
             return httpx.Response(200, json={"results": [
                 {
                     "title": f"Scarlet {index}",

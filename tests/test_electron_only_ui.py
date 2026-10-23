@@ -50,7 +50,7 @@ def test_macos_dev_launcher_uses_maintained_electron_paths():
     assert "'frontend'" not in launcher
 
 
-def test_home_keeps_creation_actions_with_open_source_heading():
+def test_home_keeps_creation_actions_with_localized_product_heading():
     home = (ROOT / "electron/src/renderer/src/features/home/home-page.tsx").read_text(
         encoding="utf-8"
     )
@@ -59,19 +59,10 @@ def test_home_keeps_creation_actions_with_open_source_heading():
     assert "t('homeUi.subtitle')" in home
     assert "<HomeContributors />" in home
     assert "group.map(" in home
-    assert "browser.open('https://voicestudio.sh')" in home
+    assert "browser.open('https://voicestudio.sh')" not in home
     assert "PanelLeftOpenIcon" not in home
 
 
-def test_install_smokes_build_the_pull_request_checkout_on_every_os():
-    workflow = (ROOT / ".github/workflows/install-smoke.yml").read_text(encoding="utf-8")
-    unix_step = workflow.split("- name: Build and install main (macOS/Linux)", 1)[1].split(
-        "- name: Verify and uninstall Electron (macOS/Linux)", 1
-    )[0]
-    assert 'if [ "$GITHUB_EVENT_NAME" = pull_request ]' in unix_step
-    assert '"$RUNNER_OS" = Linux' not in unix_step
-
-    windows_step = workflow.split("- name: Build and install main (Windows)", 1)[1]
-    assert "GITHUB_EVENT_NAME -eq 'pull_request'" in windows_step
-    assert "git push $bare HEAD:refs/heads/main" in windows_step
-    assert "url.file:///" in windows_step
+def test_inherited_install_smoke_does_not_install_upstream_releases_in_ci():
+    assert not (ROOT / ".github/workflows/install-smoke.yml").exists()
+    assert (ROOT / "docs/archive/upstream-workflows/install-smoke.yml").exists()

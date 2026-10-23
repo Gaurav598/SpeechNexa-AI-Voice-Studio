@@ -5,12 +5,11 @@ build-backend = "hatchling.build"
 [project]
 name = "omnivoice"
 version = "0.5.7"
-description = "VoiceStudio — a private, local-first studio for voice cloning, speech generation, dubbing, transcription, and audiobooks"
+description = "SpeechNexa — a local-first studio for speech generation, voice processing, dubbing, and transcription"
 readme = "README.md"
-# Free and open-source under the GNU Affero General Public License v3 (see
-# LICENSE). A commercial license is available for proprietary/closed-source use
-# without AGPL obligations — contact hi@voicestudio.sh. The bundled omnivoice/
-# TTS model by Han Zhu remains Apache-2.0 upstream (Apache-2.0 is AGPL-compatible).
+# This imported application source remains AGPL-3.0-only; see LICENSE-NOTICE.md
+# and UPSTREAM.md. The bundled omnivoice/ model code has separate Apache-2.0
+# upstream terms, and downloaded model weights may carry further restrictions.
 license = "AGPL-3.0-only"
 requires-python = ">=3.11"
 authors = [{name = "Debpalash"}, {name = "Han Zhu"}]
@@ -257,9 +256,9 @@ omnivoice-demo = "omnivoice.cli.demo:main"
 omnivoice-dub = "omnivoice.cli.dub:main"
 
 [project.urls]
-Homepage = "https://github.com/debpalash/VoiceStudio"
-Repository = "https://github.com/debpalash/VoiceStudio"
-Documentation = "https://github.com/debpalash/VoiceStudio/tree/main/docs"
+Homepage = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
+Repository = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
+Documentation = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/tree/main/docs"
 "Bug Tracker" = "https://github.com/debpalash/VoiceStudio/issues"
 "Upstream TTS Model" = "https://github.com/k2-fsa/OmniVoice"
 

@@ -1,4 +1,4 @@
-import { expect, it } from 'vitest';
+import { expect, it, vi } from 'vitest';
 import { cloudAccountsAvailable, cloudOrigins, resolveCloudEnvironment } from './cloud-config';
 
 it('packaged builds are locked to production whatever the env var says', () => {
@@ -27,9 +27,20 @@ it('lists exactly the origins the app may contact', () => {
   ]);
 });
 
-it('accounts are available in developer builds and hidden in packaged builds without the flag', () => {
+it('upstream accounts are unavailable in developer and packaged builds', () => {
+  expect(cloudAccountsAvailable(false)).toBe(false);
+  expect(cloudAccountsAvailable(true)).toBe(false);
+  vi.stubEnv('VOICESTUDIO_CLOUD_ACCOUNTS', '1');
+  expect(cloudAccountsAvailable(false)).toBe(false);
+  expect(cloudAccountsAvailable(true)).toBe(false);
+  vi.unstubAllEnvs();
+});
+
+it('only an explicit local development test can enable account internals', () => {
+  vi.stubEnv('SPEECHNEXA_ENABLE_LOCAL_ACCOUNT_TESTING', '1');
   expect(cloudAccountsAvailable(false)).toBe(true);
   expect(cloudAccountsAvailable(true)).toBe(false);
+  vi.unstubAllEnvs();
 });
 
 it('the development server signs in through the dashboard host (vssaas f9ae9d4)', () => {

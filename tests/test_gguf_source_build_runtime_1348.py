@@ -335,6 +335,6 @@ def test_ci_artifact_upload_includes_the_shared_libs():
     # Greptile P1 on the fix itself: copy_shared_libs is useless if the
     # workflow's upload glob then drops the libs from the artifact — the
     # downloaded binary would be exactly as broken as before.
-    wf = (REPO / ".github/workflows/build-omnivoice-tts.yml").read_text()
+    wf = (REPO / "docs/archive/upstream-workflows/build-omnivoice-tts.yml").read_text()
     assert "bin/libggml*" in wf
     assert "bin/ggml*.dll" in wf

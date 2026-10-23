@@ -28,12 +28,13 @@ from services.model_manager import (
     get_model, run_on_gpu_pool_guarded, GpuJobTimeoutError,
     GpuPoolBusyError,
 )
-from services.generation_audio import save_generation_wav
+from services.generation_audio import WAV_SUBTYPES, save_generation_wav
 # Compatibility export used by archetype previews and the gallery renderer.
 from services.audio_io import _safe_torchaudio_save
 from services.binary_preflight import InvalidBinaryError
 from services.model_acceptance import ModelLicenceNotAccepted
 from core import event_bus
+from core import job_store
 from core.render_trace import call as trace_call
 from core.logging_utils import log_safe
 from omnivoice.utils.voice_design import heal_design_instruct
@@ -1538,6 +1539,7 @@ async def _finalize_generation(
     audio_tensor, sample_rate, *, text, history_mode, ref_audio_path,
     language, instruct, resolved_profile_id, used_seed, start_time,
     already_marked=False, design_recipe=None, wav_bits=16, include_wav_bytes=False,
+    job_id=None,
 ):
     """Shared tail of a successful generation: watermark → save WAV →
     history row (self-healing) → retention prune → event emit.
@@ -1566,6 +1568,10 @@ async def _finalize_generation(
     # Dispatched to the dedicated watermark pool, not the GPU pool (#1190):
     # AudioSeal embedding is CPU work that holds no VRAM, so occupying a GPU
     # worker with it only delays the next generate on 1-worker hosts.
+    if job_id and not job_store.transition(
+        job_id, from_statuses=("running",), to_status="post_processing"
+    ):
+        raise RuntimeError("Generation job is no longer running")
     if not already_marked:
         from services.watermark import mark_synthetic_async
         audio_tensor = await mark_synthetic_async(
@@ -1588,6 +1594,16 @@ async def _finalize_generation(
     def _save_take():
         try:
             save_generation_wav(audio_path, audio_tensor, sample_rate, bits=wav_bits)
+            if job_id:
+                # The writer returning is insufficient evidence of a usable
+                # artifact. Check the file that retrieval will actually serve.
+                import soundfile as sf
+                info = sf.info(audio_path)
+                if (info.format != "WAV" or info.subtype != WAV_SUBTYPES[wav_bits]
+                        or info.samplerate != sample_rate
+                        or info.frames != audio_tensor.shape[-1]
+                        or info.frames <= 0 or info.channels < 1):
+                    raise ValueError("Generated WAV failed output validation")
             # Capture before creating the history row: concurrent retention cannot
             # see or remove this take yet. Encoding and disk I/O stay off the loop.
             return Path(audio_path).read_bytes() if include_wav_bytes else None
@@ -1645,6 +1661,17 @@ async def _finalize_generation(
             logger.warning("history write still failed after schema heal; returning audio anyway: %s", e2)
     except Exception as e:
         logger.warning("generation history write failed; returning audio anyway: %s", e)
+    if job_id:
+        output_meta = {
+            "audio_id": audio_id, "audio_path": audio_filename,
+            "duration_seconds": audio_dur, "sample_rate": sample_rate,
+            "wav_bytes": os.path.getsize(audio_path),
+        }
+        if not job_store.transition(
+            job_id, from_statuses=("post_processing",), to_status="done",
+            meta_update=output_meta,
+        ):
+            raise RuntimeError("Generation job could not be completed")
     # Retention cap: without it, takes (rows + WAVs in OUTPUTS_DIR) grow
     # unbounded forever. Best-effort — a prune failure must never affect
     # the generation that just succeeded.
@@ -1705,6 +1732,28 @@ def _apply_routing_headers(headers, engine_notice):
     if safe:
         headers["X-OmniVoice-Routing-Reason"] = safe
     return headers
+
+
+def _begin_generation_job(*, engine_id: str, text: str, streaming: bool) -> str:
+    """Admit an already validated, ready-to-render /generate request."""
+    job_id = uuid.uuid4().hex
+    if not job_store.create(
+        job_id, type="speech_generate", replace=False,
+        meta={"engine": engine_id, "text_length": len(text), "stream": streaming},
+    ):
+        raise RuntimeError("Could not reserve a generation job")
+    if not job_store.transition(
+        job_id, from_statuses=("pending",), to_status="running"
+    ):
+        raise RuntimeError("Could not start the generation job")
+    return job_id
+
+
+def _fail_generation_job(job_id: str, error: str) -> None:
+    job_store.transition(
+        job_id, from_statuses=("pending", "running", "post_processing"),
+        to_status="failed", error=error,
+    )
 
 @router.get("/generate/budget")
 def generate_budget(engine: Optional[str] = None):
@@ -2263,6 +2312,10 @@ async def generate_speech(
             except Exception as e:
                 _oom_friendly_reraise(e)
 
+        job_id = _begin_generation_job(
+            engine_id=engine_id, text=text, streaming=True
+        )
+
         async def _stream_events():
             import json
 
@@ -2406,6 +2459,7 @@ async def generate_speech(
                     instruct=instruct, resolved_profile_id=resolved_profile_id,
                     used_seed=used_seed, start_time=start_time, wav_bits=int(wav_bits),
                     design_recipe=stored_design_recipe,
+                    job_id=job_id,
                 )
                 # #1330: before `done`, say what the take is missing. Its own
                 # frame rather than a `done` field so a consumer that only
@@ -2426,6 +2480,10 @@ async def generate_speech(
             except (asyncio.CancelledError, GeneratorExit):
                 # Client went away mid-stream — same semantics as aborting a
                 # classic /generate mid-render: nothing is saved.
+                job_store.transition(
+                    job_id, from_statuses=("running", "post_processing"),
+                    to_status="cancelled",
+                )
                 raise
             except GpuPoolBusyError as e:
                 # In-band error frame carries the machine-readable retryable
@@ -2435,6 +2493,7 @@ async def generate_speech(
                 from core.public_errors import stream_failure
                 failure = stream_failure("generation_busy")
                 failure["retry_after"] = getattr(e, "retry_after", 30)
+                _fail_generation_job(job_id, failure.get("reason", "Generation capacity unavailable"))
                 yield _line({"type": "error", **failure})
             except GpuJobTimeoutError:
                 # The worker started and spent its full execution budget. That
@@ -2446,6 +2505,7 @@ async def generate_speech(
                     device=_routing.get("effective_device"),
                 )
                 failure["retry_after"] = 30
+                _fail_generation_job(job_id, failure.get("reason", "Generation timed out"))
                 yield _line({"type": "error", **failure})
             except ValueError as e:
                 logger.error("Streaming generation request rejected")
@@ -2454,6 +2514,7 @@ async def generate_speech(
                     _language_rejection_payload(e, language, from_profile=language_from_profile)
                     if _is_language_rejection(str(e)) else stream_failure("invalid_request")
                 )
+                _fail_generation_job(job_id, failure.get("reason", "Invalid generation request"))
                 yield _line({"type": "error", **failure})
             except Exception as exc:
                 # A streaming request answers 200 and carries its failure as an
@@ -2477,8 +2538,11 @@ async def generate_speech(
                 error_journal.record(
                     exc, route="/generate", trace=traceback.format_exc()
                 )
-                yield _line({"type": "error", **stream_generation_failure(exc)})
+                failure = stream_generation_failure(exc)
+                _fail_generation_job(job_id, failure.get("reason", "Generation failed"))
+                yield _line({"type": "error", **failure})
             finally:
+                _fail_generation_job(job_id, "Generation stream ended before completion")
                 # Ownership of the temp reference clip moves to this generator
                 # in stream mode (the route returns before rendering starts).
                 if cleanup_ref and ref_lease is not None:
@@ -2487,6 +2551,7 @@ async def generate_speech(
         # Routing notice (#21): known before the stream starts.
         _stream_headers = _apply_routing_headers({
             "X-Seed": str(used_seed) if used_seed is not None else "",
+            "X-Job-Id": job_id,
             "Cache-Control": "no-cache",
         }, _routing_notice)
         return StreamingResponse(
@@ -2501,6 +2566,9 @@ async def generate_speech(
     # so. A warning in a log the user never opens is a record of the bug, not a
     # fix for it.
     _dropped_text: list = []
+    job_id = _begin_generation_job(
+        engine_id=engine_id, text=text, streaming=False
+    )
     try:
         # The gateway owns the dispatch on both branches. Locally it still
         # lands in run_on_gpu_pool_guarded, so the #730 bound + pool reset
@@ -2558,6 +2626,7 @@ async def generate_speech(
             resolved_profile_id=resolved_profile_id, used_seed=used_seed,
             start_time=start_time, already_marked=False, wav_bits=int(wav_bits), include_wav_bytes=True,
             design_recipe=stored_design_recipe,
+            job_id=job_id,
         )
         audio_id = _meta["id"]
         audio_filename = _meta["filename"]
@@ -2573,6 +2642,7 @@ async def generate_speech(
                 yield wav_bytes[i:i + chunk_size]
 
         _resp_headers = {
+            "X-Job-Id": job_id,
             "X-Audio-Id": audio_id,
             "X-Gen-Time": str(gen_time),
             "X-Audio-Path": audio_filename,
@@ -2598,9 +2668,19 @@ async def generate_speech(
             media_type="audio/wav",
             headers=_resp_headers,
         )
-    except (HTTPException, ModelLicenceNotAccepted):
+    except asyncio.CancelledError:
+        job_store.transition(
+            job_id, from_statuses=("running", "post_processing"),
+            to_status="cancelled",
+        )
+        raise
+    except (HTTPException, ModelLicenceNotAccepted) as exc:
+        _fail_generation_job(job_id, "Generation request was rejected")
+        if isinstance(exc, HTTPException):
+            exc.headers = {**(exc.headers or {}), "X-Job-Id": job_id}
         raise
     except GpuPoolBusyError as e:
+        _fail_generation_job(job_id, "Generation capacity unavailable")
         # Saturation, not failure (#1190): the job never started, so the caller
         # can retry the identical request. Retry-After + the retryable marker
         # make that machine-readable for scripted clients.
@@ -2608,24 +2688,30 @@ async def generate_speech(
         raise HTTPException(
             status_code=503, detail=str(e),
             headers={"Retry-After": str(e.retry_after),
-                     "X-OmniVoice-Retryable": "true"},
+                     "X-OmniVoice-Retryable": "true", "X-Job-Id": job_id},
         ) from e
     except GpuJobTimeoutError as e:
+        _fail_generation_job(job_id, "Generation timed out")
         # A generate that really ran and overran its budget (#730 class). The
         # abandoned worker still holds the device until it drains — the message
         # says so, and Retry-After spaces the retry out accordingly.
         logger.error("Generate timed out: %s", e)
         raise HTTPException(
             status_code=503, detail=str(e),
-            headers={"Retry-After": "30", "X-OmniVoice-Retryable": "true"},
+            headers={"Retry-After": "30", "X-OmniVoice-Retryable": "true",
+                     "X-Job-Id": job_id},
         ) from e
     except InvalidBinaryError as e:
+        _fail_generation_job(job_id, "Engine binary unavailable")
         # #1172 class: a managed engine binary is a placeholder / corrupt /
         # refused by the OS. The message carries the repair hint — surface it
         # as 503 (engine unavailable), not a generic 500.
         logger.error("Engine binary preflight failed: %s", e)
-        raise HTTPException(status_code=503, detail=str(e)) from e
+        raise HTTPException(
+            status_code=503, detail=str(e), headers={"X-Job-Id": job_id}
+        ) from e
     except ValueError as e:
+        _fail_generation_job(job_id, "Invalid generation request")
         logger.error("Validation failed: %s", e)
         # #2156: the language the engine refused was never chosen by the user —
         # it came from the selected voice profile because the picker was on
@@ -2652,9 +2738,14 @@ async def generate_speech(
             raise HTTPException(
                 status_code=400,
                 detail={"docs_topic": _topic, "message": _owned, "hint": _owned},
+                headers={"X-Job-Id": job_id},
             ) from e
-        raise HTTPException(status_code=400, detail=_owned or str(e)) from e
+        raise HTTPException(
+            status_code=400, detail=_owned or str(e),
+            headers={"X-Job-Id": job_id},
+        ) from e
     except Exception as e:
+        _fail_generation_job(job_id, "Generation failed")
         tb = traceback.format_exc()
         logger.error("Inference failed: %s\n%s", e, tb)
         raise HTTPException(
@@ -2663,6 +2754,7 @@ async def generate_speech(
                 f"Couldn't synthesize audio. See Settings → Logs → Backend for the full trace. "
                 f"Underlying error: {_safe_exc_text(e)}"
             ),
+            headers={"X-Job-Id": job_id},
         )
     finally:
         if cleanup_ref and ref_lease is not None:

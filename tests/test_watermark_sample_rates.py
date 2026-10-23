@@ -19,6 +19,7 @@ def test_model_rate_and_original_audio_are_preserved(monkeypatch, rate):
             seen.append(('detect', sample_rate, audio.shape[-1]))
             return 0.9, torch.tensor(watermark.OMNI_MESSAGE)
     monkeypatch.setattr(watermark, '_check_available', lambda: True)
+    monkeypatch.setattr(watermark, '_generator_checkpoint_cached', lambda: True)
     monkeypatch.setattr(watermark, '_get_generator', Generator)
     monkeypatch.setattr(watermark, '_get_detector', Detector)
     wave = torch.randn(1, rate + 7)
@@ -36,6 +37,7 @@ def test_resampled_watermark_is_added_without_lowpassing_the_source(monkeypatch)
         def __call__(self, audio, sample_rate, message):
             return audio + 0.01
     monkeypatch.setattr(watermark, '_check_available', lambda: True)
+    monkeypatch.setattr(watermark, '_generator_checkpoint_cached', lambda: True)
     monkeypatch.setattr(watermark, '_get_generator', Generator)
     wave = torch.randn(1, 48007) * 0.1
     result = watermark.embed_watermark(wave, 48000, force=True)

@@ -33,6 +33,7 @@ import base64
 import importlib
 import io
 import json
+import sqlite3
 import zlib
 
 import pytest
@@ -241,6 +242,20 @@ def hermetic_outputs(tmp_path, monkeypatch):
     outdir.mkdir()
     monkeypatch.setattr(cfg, "OUTPUTS_DIR", str(outdir))
     monkeypatch.setattr(gen_mod, "OUTPUTS_DIR", str(outdir))
+    # /generate now records a durable job. Bare TestClient fixtures do not run
+    # application startup, so give this route the same isolated schema as the
+    # generation tests rather than borrowing a developer's application DB.
+    db_path = tmp_path / "history.db"
+
+    def _get_db():
+        conn = sqlite3.connect(str(db_path))
+        conn.row_factory = sqlite3.Row
+        conn.execute("PRAGMA journal_mode=WAL")
+        conn.execute("PRAGMA foreign_keys=ON")
+        return conn
+
+    monkeypatch.setitem(gen_mod.ensure_schema.__globals__, "get_db", _get_db)
+    gen_mod.ensure_schema()
     return outdir
 
 

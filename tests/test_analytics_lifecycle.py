@@ -339,17 +339,15 @@ def test_uninstall_ping_info_written_when_enabled_and_removed_when_not(
     assert not info.exists()
 
 
-def test_uninstall_ping_info_written_for_a_source_build_with_the_default_token(
+def test_uninstall_ping_info_absent_for_a_source_build_without_explicit_token(
     sent, monkeypatch, tmp_path
 ):
-    """#1193: a consented source build has a destination (the in-repo default),
-    so the uninstall ping must work there too."""
-    analytics.set_opted_in(True)  # no env token → in-repo default
+    """SpeechNexa source builds have no bundled analytics destination."""
+    assert analytics._PUBLIC_PROJECT_TOKEN == ""
+    analytics.set_opted_in(True)
     info = tmp_path / analytics.UNINSTALL_PING_INFO_BASENAME
-    assert info.exists()
-    payload = json.loads(info.read_text())
-    assert payload["token"] == analytics._PUBLIC_PROJECT_TOKEN
-    assert payload["host"] == "https://us.i.posthog.com"
+    assert not info.exists()
+    assert sent == []
 
 
 def test_uninstall_ping_info_never_written_without_any_token(sent, monkeypatch, tmp_path):

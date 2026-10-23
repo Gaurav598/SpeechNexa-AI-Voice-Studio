@@ -131,7 +131,7 @@ def test_preload_never_loads_uninstalled_checkpoint(model_manager, monkeypatch):
     assert model_manager.model is None
 
 
-def test_preload_warms_up_locally_installed_checkpoint(model_manager, monkeypatch):
+def test_preload_warms_up_locally_installed_checkpoint(model_manager, monkeypatch, native_omnivoice_host):
     """The counterpart guard: a locally present checkpoint must still warm up
     (skipping it would make the first /generate eat the full weight load)."""
     monkeypatch.setattr(model_manager, "_checkpoint_in_local_cache", lambda c: True)

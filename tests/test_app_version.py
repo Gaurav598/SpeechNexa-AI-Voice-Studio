@@ -62,7 +62,7 @@ def test_release_policy_requires_owner_approved_manual_bumps():
     release_guide = (root / "docs/RELEASING.md").read_text(encoding="utf-8")
 
     assert "main is always **latest release + 1 patch**" not in constitution
-    assert "Version bumps are manual and happen only when the owner asks" in constitution
+    assert "Do not bump without the owner's request" in constitution
     assert "Version bumps are manual and require owner approval" in release_guide
 
 

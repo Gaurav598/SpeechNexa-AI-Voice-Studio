@@ -47,6 +47,15 @@ def test_dub_storage_key_allowlist_does_not_hide_similar_credentials():
 # value itself may only appear in the two canonical analytics files).
 _RETIRED_TOKEN_SHA256 = {"cf19c9566b83f7375f591f5fbf776b9c344025805d12c16bd21333f70a708f72"}
 _FINGERPRINT = re.compile(r"^([0-9a-f]{40}):([^:]+):([a-z0-9-]+):([0-9]+)$")
+_PUBLIC_WEBSOCKET_SAMPLE = (
+    "f6d634e19902c0fd0e64947e635359d5bc1f85de:"
+    "electron/tests/fake-health-backend.test.mjs:generic-api-key:59"
+)
+_EXPECTED_IGNORES = {
+    "23f1767e3c4f971cc5d8e4c8b84fb17337b69bc5:backend/core/analytics.py:generic-api-key:57",
+    "23f1767e3c4f971cc5d8e4c8b84fb17337b69bc5:frontend/src/utils/analytics.ts:generic-api-key:44",
+    _PUBLIC_WEBSOCKET_SAMPLE,
+}
 
 
 def _ignored_fingerprints():
@@ -55,11 +64,12 @@ def _ignored_fingerprints():
 
 
 def test_gitleaks_ignores_only_commit_pinned_posthog_findings():
-    """An ignore entry names one finding in one commit, never a path or a rule."""
+    """Only reviewed findings in specific commits may be ignored."""
     import subprocess
 
     entries = _ignored_fingerprints()
-    assert entries
+    assert len(entries) == len(_EXPECTED_IGNORES)
+    assert set(entries) == _EXPECTED_IGNORES
     shallow = subprocess.run(
         ["git", "rev-parse", "--is-shallow-repository"],
         cwd=ROOT, capture_output=True, text=True,
@@ -75,6 +85,10 @@ def test_gitleaks_ignores_only_commit_pinned_posthog_findings():
         )
         assert shown.returncode == 0, f"cannot read the pinned commit and path: {entry}"
         source_line = shown.stdout.splitlines()[int(line) - 1]
+        if entry == _PUBLIC_WEBSOCKET_SAMPLE:
+            rfc_sample = "dGhlIHNhbXBsZSBu" + "b25jZQ=="
+            assert source_line.strip() == f"'Sec-WebSocket-Key': '{rfc_sample}',"
+            continue
         # Only the retired public PostHog project token may be skipped.
         token = re.search(r"phc_[A-Za-z0-9]{20,}", source_line)
         assert token, entry

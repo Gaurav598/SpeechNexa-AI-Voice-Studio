@@ -18,6 +18,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts" / "check_commit_identities.py"
 HASH_FILE = ROOT / "scripts" / "blocked_identity_hashes.txt"
 WORKFLOW = ROOT / ".github" / "workflows" / "commit-identity.yml"
+ARCHIVED_WORKFLOW = ROOT / "docs" / "archive" / "upstream-workflows" / "commit-identity.yml"
 CLEAN = ("Clean Dev", "12345+clean@users.noreply.github.com")
 
 
@@ -149,9 +150,10 @@ def test_shipped_hash_list_is_digests_only():
     assert all(re.fullmatch(r"[0-9a-f]{64}", e) for e in entries)
 
 
-def test_workflow_uses_trusted_target_orchestration_and_privileged_status():
-    """Pin identity policy execution to the pull request's trusted base commit."""
-    wf = yaml.load(WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+def test_inherited_privileged_identity_workflow_is_archived():
+    """Keep the upstream policy for provenance without running it on SpeechNexa PRs."""
+    assert not WORKFLOW.exists()
+    wf = yaml.load(ARCHIVED_WORKFLOW.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
     assert set(wf["on"]) == {"pull_request_target"}
     assert "edited" in wf["on"]["pull_request_target"]["types"]
     assert wf["permissions"] == {"contents": "read", "pull-requests": "read", "statuses": "write"}

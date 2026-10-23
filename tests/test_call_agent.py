@@ -726,8 +726,11 @@ def test_barge_in_clears_playback_and_hangup_ends_the_call(api, gw, fakes):
         while not (msg["event"] == "mark" and msg["mark"]["name"] == M.session.END_MARK):
             msg = _recv(ws)
         _echo(ws, M.session.END_MARK)
-    rec = _wait_record(api, call_id, lambda r: r["ended_at"] is not None and r["status"] == "completed")
-    assert rec["outcome"] == "not_done"
+        # Keep the socket open until the server consumes the echoed mark.
+        # Closing TestClient's context immediately can cancel the handler
+        # before it records the clean completion and leave outcome="error".
+        rec = _wait_record(api, call_id, lambda r: r["ended_at"] is not None and r["status"] == "completed")
+        assert rec["outcome"] == "not_done"
 
 
 def test_takeover_pauses_the_llm_and_say_speaks_exactly_the_text(api, gw, fakes):

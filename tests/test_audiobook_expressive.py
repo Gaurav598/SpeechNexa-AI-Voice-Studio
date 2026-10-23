@@ -182,7 +182,7 @@ def _record_manual_seed(monkeypatch):
     return seeds
 
 
-def test_omnivoice_default_opts_reproduce_todays_synth_args(monkeypatch):
+def test_omnivoice_default_opts_reproduce_todays_synth_args(monkeypatch, native_omnivoice_host):
     import asyncio
 
     import api.routers.audiobook as ab
@@ -219,7 +219,7 @@ def test_omnivoice_default_opts_reproduce_todays_synth_args(monkeypatch):
         assert k not in kw
 
 
-def test_omnivoice_overrides_reach_model_but_emotion_never_does(monkeypatch):
+def test_omnivoice_overrides_reach_model_but_emotion_never_does(monkeypatch, native_omnivoice_host):
     import asyncio
 
     import api.routers.audiobook as ab

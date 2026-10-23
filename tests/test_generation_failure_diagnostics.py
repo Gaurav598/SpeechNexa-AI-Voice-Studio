@@ -69,7 +69,7 @@ def client():
     return TestClient(app, client=("127.0.0.1", 50000), raise_server_exceptions=False)
 
 
-def test_500_body_carries_exception_type_and_topic(client, monkeypatch):
+def test_500_body_carries_exception_type_and_topic(client, monkeypatch, native_omnivoice_host):
     import api.routers.generation as gen
 
     async def boom():

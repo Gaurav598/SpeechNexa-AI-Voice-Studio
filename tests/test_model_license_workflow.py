@@ -263,7 +263,7 @@ class WorkflowTests(unittest.TestCase):
         p = self.prepare()
         for group in ("receipts", "evidence", "installed"):
             self.assertEqual(self.service._record_path(group, p["plan_digest"]),
-                             self.service.store / group / f"{p['plan_digest']}.json")
+                             (self.service.store / group / f"{p['plan_digest']}.json").resolve())
 
     def test_symlinked_receipt_directory_cannot_escape_store(self):
         p = self.prepare()

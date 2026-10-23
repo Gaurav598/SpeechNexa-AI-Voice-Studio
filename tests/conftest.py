@@ -76,6 +76,23 @@ import pytest
 import warnings as _warnings
 
 
+@pytest.fixture
+def native_omnivoice_host(monkeypatch):
+    """Exercise native-model seams independently of the developer's GPU.
+
+    On MPS, production routes OmniVoice to a sidecar and skips native preload.
+    Tests that replace the in-process model need a CPU host so their fake is
+    actually used, including on Apple Silicon CI.
+    """
+    from core.device_caps import HostCaps
+    import core.device_caps as device_caps
+
+    monkeypatch.setattr(
+        device_caps, "detect_host_caps",
+        lambda: HostCaps(family="cpu", available_families=("cpu",)),
+    )
+
+
 # ── Persisted user settings: per-test isolation ────────────────────────────
 # The hermetic data dir above is per SESSION, so prefs.json and the user-env
 # file are shared by every test in the run. Anything a test persists there —

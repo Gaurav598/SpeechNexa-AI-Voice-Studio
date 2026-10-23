@@ -4,10 +4,11 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def test_readme_installs_skills_from_the_canonical_repository() -> None:
+def test_readme_uses_the_speechnexa_repository_for_setup() -> None:
     readme = (ROOT / "README.md").read_text(encoding="utf-8")
 
-    assert "npx skills add debpalash/VoiceStudio" in readme
+    assert "git clone https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio.git" in readme
+    assert "npx skills add debpalash/VoiceStudio" not in readme
     assert "npx skills add debpalash/omnivoice-studio" not in readme
 
 

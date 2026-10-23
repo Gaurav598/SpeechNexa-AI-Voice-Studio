@@ -498,7 +498,7 @@ def test_stream_timeout_names_the_cpu_remedy_only_on_cpu(
     assert ("CPU budget" in err["detail"]) is expect_cpu_copy
 
 
-def test_stream_native_model_path(client, monkeypatch, tmp_path):
+def test_stream_native_model_path(client, monkeypatch, tmp_path, native_omnivoice_host):
     """The native OmniVoice model path streams too (per-chunk generate calls
     with duration=None), and its saved take matches the classic render."""
     from unittest.mock import MagicMock

@@ -1,12 +1,12 @@
 # SpeechNexa implementation status
 
-Updated: 2026-10-23 (Asia/Kolkata). This is a continuation checkpoint, not a release announcement.
+Updated: 2026-10-24 (Asia/Kolkata). This is a source implementation checkpoint, not a binary release announcement.
 
 ## Repository and provenance
 
 - The source arrived as a downloaded VoiceStudio archive without `.git`. Five pre-edit root files matched upstream Git blobs from `28bf2c7a83b8a64836297340c52a45d716684aed`. A full recursive archive match is unproven.
-- Local `main` now points to that fetched upstream commit as its baseline; imported authorship is preserved in the commit graph. SpeechNexa modifications are in the working tree and have not yet been committed. `origin` is the owner's existing `Gaurav598/SpeechNexa-AI-Voice-Studio` repository. `upstream` fetches VoiceStudio and has a disabled push URL.
-- The destination was verified empty again with `git ls-remote --heads origin` on 2026-10-23. No code has been pushed and GitHub CI is unverified.
+- Local `main` uses that fetched upstream commit as its baseline; imported authorship is preserved in the commit graph. The migration checkpoint is commit `6b2ebd2` on `main`. `origin` is the owner's existing `Gaurav598/SpeechNexa-AI-Voice-Studio` repository. `upstream` fetches VoiceStudio and has a disabled push URL.
+- The destination was verified empty with `git ls-remote --heads origin` on 2026-10-23. Full upstream history was fetched locally; source publication to the owner's repository is in progress. GitHub CI is unverified at this checkpoint.
 - Imported sample media under `backend/assets/samples/` has unresolved redistribution rights (`NOASSERTION` in its own manifest). See `UPSTREAM.md` and `THIRD_PARTY_NOTICES.md`.
 
 ## Verified implementation
@@ -15,13 +15,13 @@ Updated: 2026-10-23 (Asia/Kolkata). This is a continuation checkpoint, not a rel
 - FastAPI starts on loopback. Real `KittenML/kitten-tts-mini-0.8` inference through `POST /generate` produced a 24 kHz mono WAV. The final offline smoke on this Apple M4 Mac (16 GB RAM) produced 3.939 seconds of non-silent audio (RMS 0.1788) in 4.218 seconds of API time. `GET /audio/fe500b6a.wav` matched the response and stored WAV byte for byte. SQLite history and a completed `speech_generate` job were verified after backend shutdown. Engine is ONNX CPU; direct PyTorch MPS availability was false.
 - Optional AudioSeal no longer downloads its checkpoint during offline generation. The smoke used an empty isolated AudioSeal cache and detected no cache writes or download logs. Explicit opt-in prefetch remains possible. The regression test failed before and passed after the runtime gate.
 - Active `/generate` creates a durable job ID exposed in `X-Job-Id` for classic and streaming responses. Guarded transitions validate the WAV before completion and record failures/cancellation. The existing GPU pool now has FIFO memory reservations when dedicated free VRAM is measurable. CPU/MPS/unknown VRAM retains the worker-count bound; no preemption or guaranteed GPU capacity is claimed.
-- Electron desktop/web builds, locale/type checks and targeted UI tests passed in the prior specialist pass. Active product metadata and packaged icons use SpeechNexa; legacy runtime compatibility remains. A later change also corrected the macOS development bundle name and is pending the final test pass.
+- Electron desktop/web builds, locale/type checks and full renderer/shared unit suites passed on this Mac. Active product metadata, packaged icons and the macOS development bundle use SpeechNexa; legacy runtime compatibility remains.
 - Imported release/store/CLA/funding automation was archived; active CI has read-only permissions and SpeechNexa migration gates. Local provenance and model-inventory checks passed in the specialist pass. Model weights are not checked in.
 
 ## Current verification and limits
 
-- Post-integration focused Python gate: 163 passed, 15 warnings. Electron under bundled Node 24: renderer suite 1,683 passed and 2 skipped; shared suite 2,902 passed. Typecheck, locale contract, Electron and web builds, packaging contract, and 107 root frontend tests passed. The full Python suite is in progress after fixing its first two unrelated assumptions: MPS runs OmniVoice through a subprocess and the README must link to the feature catalog. Earlier focused results (53 watermark, 71 generation/job, 40 scheduler, 20 safety/licensing, 100 Electron) overlap with the newer gates.
-- The staged migration files passed `gitleaks dir` with the repository configuration (zero findings); a whole-workspace scan included ignored generated build files and is not a source verdict. `git diff --cached --check` and the SpeechNexa migration/model-license validators passed.
+- The full Python suite excluding `tests/smoke/` passed: 9,844 passed, 84 skipped, 2 expected failures and 7 unexpected passes. The boot smoke passed separately (4 tests), and `backend/tests/` passed (515 tests). The remaining macOS hotkey smoke requires Cargo, which is absent on this host. Electron under bundled Node 24: renderer suite 1,683 passed and 2 skipped; shared suite 2,902 passed. Typecheck, locale contract, Electron and web builds, packaging contract, and 107 root frontend tests passed. The earlier focused Python and UI results overlap these broader gates.
+- The staged migration files and the follow-up source changes separately passed `gitleaks dir` with the repository configuration (zero findings). A whole-workspace scan included ignored generated build files and is not a source verdict. `git diff --check` and the SpeechNexa migration/model-license validators passed.
 - macOS is the only runtime host used for real speech. Windows and Linux execution, native installers, native mobile apps, other model adapters and all imported workflows are unverified. A full first-release claim requires those gates and GitHub CI.
 - Jobs begin after model prewarming; a model-load wait can occur before a job ID is available. Persistence records state but does not replay a crashed generation. A history retention action can remove an output while its job metadata remains.
 - Analytics/account/cloud/update paths are disabled or gated for the migration. Some inherited VoiceStudio wording and commercial-only UI pages are being audited; do not claim all screens fully migrated.

@@ -139,7 +139,7 @@ def test_mps_proxy_keeps_longform_quality_and_child_seed(monkeypatch):
 
 # ── omnivoice branch: explicit quality preset + pinned seed ──────────────────
 
-def test_omnivoice_synth_pins_quality_preset_and_seed(monkeypatch):
+def test_omnivoice_synth_pins_quality_preset_and_seed(monkeypatch, native_omnivoice_host):
     import api.routers.audiobook as ab
     import services.model_manager as mm
     import services.tts_backend as tb

@@ -1,4 +1,4 @@
-"""VoiceStudio release-brand and source-launch contracts."""
+"""SpeechNexa brand, compatibility, and source-launch contracts."""
 
 from __future__ import annotations
 
@@ -29,10 +29,10 @@ def test_current_version_is_in_lockstep_everywhere() -> None:
         assert match and match.group(1) == CURRENT_VERSION, path
 
 
-def test_visible_brand_surfaces_say_voicestudio() -> None:
+def test_visible_brand_surfaces_say_speechnexa() -> None:
     visible_files = ("electron/build/Info.plist", "electron/src/renderer/index.html")
     product_name = json.loads((ROOT / "config/app.json").read_text())["productName"]
-    assert product_name == "VoiceStudio"
+    assert product_name == "SpeechNexa"
     for path in visible_files:
         text = (ROOT / path).read_text()
         assert "__APP_PRODUCT_NAME__" in text, path
@@ -41,11 +41,12 @@ def test_visible_brand_surfaces_say_voicestudio() -> None:
         assert "OmniVoice Gallery" not in text, path
 
     readme = (ROOT / "README.md").read_text()
-    assert "**VoiceStudio** (default, powered by k2-fsa/OmniVoice)" in readme
+    assert readme.startswith("# SpeechNexa\n")
+    assert "**SpeechNexa — AI Voice Generation & Speech Studio**" in readme
     assert "**OmniVoice** (default)" not in readme
 
 
-def test_brand_mark_is_shared_and_fills_the_icon() -> None:
+def test_active_icon_is_speechnexa_and_legacy_shared_mark_is_preserved() -> None:
     mark = (ROOT / "electron/src/shared/components/brand/VoiceStudioMark.jsx").read_text()
     header = (ROOT / "electron/src/shared/components/Header.jsx").read_text()
     about = (ROOT / "electron/src/shared/components/settings/AboutTab.jsx").read_text()
@@ -55,7 +56,11 @@ def test_brand_mark_is_shared_and_fills_the_icon() -> None:
     signature = "M6 34c4 0 5-7 9-7"
     assert signature in mark
     assert signature in logo
-    assert signature in favicon
+    # The old shared UI still imports its original mark, while the active
+    # Electron favicon uses the newly generated SpeechNexa artwork.
+    assert 'aria-label="SpeechNexa"' in favicon
+    assert 'd="M16 45V19l16 26V19"' in favicon
+    assert signature not in favicon
     assert "<VoiceStudioMark" in header
     assert "<VoiceStudioMark" in about
     assert 'data-testid="voice-studio-logo"' in header
@@ -64,13 +69,14 @@ def test_brand_mark_is_shared_and_fills_the_icon() -> None:
     # mark uses the full tile and keeps only a narrow 2-unit outer margin.
     assert 'x="2" y="2" width="60" height="60"' in logo
     assert "<circle" not in logo
-    assert 'src="docs/logo.png"' in (ROOT / "README.md").read_text()
+    assert 'href="/favicon.svg"' in (ROOT / "electron/src/renderer/index.html").read_text()
 
 
-def test_python_package_metadata_points_to_voicestudio() -> None:
+def test_python_package_metadata_points_to_speechnexa_and_upstream_model() -> None:
     pyproject = (ROOT / "pyproject.toml").read_text()
-    assert 'Homepage = "https://github.com/debpalash/VoiceStudio"' in pyproject
-    assert 'Repository = "https://github.com/debpalash/VoiceStudio"' in pyproject
+    destination = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
+    assert f'Homepage = "{destination}"' in pyproject
+    assert f'Repository = "{destination}"' in pyproject
     assert '"Upstream TTS Model" = "https://github.com/k2-fsa/OmniVoice"' in pyproject
 
 
@@ -93,10 +99,10 @@ def test_engine_help_names_the_app_not_the_upstream_model() -> None:
 
 def test_compatibility_identifiers_stay_stable() -> None:
     package = json.loads((ROOT / "package.json").read_text())
-    assert package["name"] == "omnivoice-studio-monorepo"
+    assert package["name"] == "speechnexa-monorepo"
     assert 'name = "omnivoice"' in (ROOT / "pyproject.toml").read_text()
     app_config = json.loads((ROOT / "config/app.json").read_text())
-    assert app_config["appId"] == "com.voicestudio.desktop"
+    assert app_config["appId"] == "com.speechnexa.desktop"
 
 
 def test_active_source_launch_is_electron_and_web_ports_clean_quietly() -> None:

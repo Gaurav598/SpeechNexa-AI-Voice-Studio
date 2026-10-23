@@ -26,6 +26,7 @@ import logging
 import math
 
 import numpy as np
+import soundfile as sf
 import torch
 import torchaudio
 from pydub import AudioSegment
@@ -80,14 +81,23 @@ def load_audio(audio_path: str, sampling_rate: int):
             audio_path, backend="soundfile"
         )
     except (ImportError, RuntimeError, OSError):
-        # Fallback via pydub+ffmpeg for formats torchaudio can't handle.
+        # SoundFile decodes PCM and floating-point WAV without external media
+        # tools. In particular, pydub asks ffprobe to inspect float WAVs, and
+        # ffprobe need not be installed when TorchCodec is unavailable.
         # ImportError belongs here too: torchaudio >= 2.9 routes load()
         # through TorchCodec and raises ImportError when its FFmpeg shared
         # libraries are absent. The ``backend="soundfile"`` argument above
         # does NOT avoid that — 2.9 accepts and ignores it.
-        aseg = AudioSegment.from_file(audio_path)
-        waveform = audiosegment_to_tensor(aseg)
-        prompt_sampling_rate = aseg.frame_rate
+        try:
+            samples, prompt_sampling_rate = sf.read(
+                audio_path, dtype="float32", always_2d=True
+            )
+            waveform = torch.from_numpy(samples.T.copy())
+        except (RuntimeError, OSError, ValueError):
+            # Keep ffmpeg-backed decoding for formats libsndfile cannot read.
+            aseg = AudioSegment.from_file(audio_path)
+            waveform = audiosegment_to_tensor(aseg)
+            prompt_sampling_rate = aseg.frame_rate
 
     if prompt_sampling_rate != sampling_rate:
         waveform = torchaudio.functional.resample(

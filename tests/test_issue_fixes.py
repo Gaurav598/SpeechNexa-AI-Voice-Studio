@@ -30,7 +30,6 @@ OLD_DISCORD = "discord.gg/aRRdVj3de7"
 NEW_DISCORD = "discord.gg/bzQavDfVV9"
 
 _LINK_FILES = [
-    "README.md",
     ".github/CONTRIBUTING.md",
     "electron/src/shared/pages/EnterprisePage.jsx",
     "electron/src/shared/components/LogsFooter.jsx",
@@ -46,6 +45,13 @@ def test_discord_link_updated(relpath):
     content = filepath.read_text(encoding="utf-8")
     assert OLD_DISCORD not in content, f"{relpath} still contains expired link {OLD_DISCORD}"
     assert NEW_DISCORD in content, f"{relpath} missing new link {NEW_DISCORD}"
+
+
+def test_speechnexa_readme_does_not_direct_users_to_upstream_discord():
+    readme = (_REPO / "README.md").read_text(encoding="utf-8")
+    assert OLD_DISCORD not in readme
+    assert NEW_DISCORD not in readme
+    assert "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio" in readme
 
 
 def test_no_old_discord_link_anywhere():

@@ -236,11 +236,17 @@ def test_mark_synthetic_never_raises(monkeypatch):
     assert watermark.mark_synthetic(wav, 24000, context="t") is wav
 
 
-def test_will_mark_requires_pref_and_availability(monkeypatch):
+def test_will_mark_requires_pref_availability_and_local_checkpoint(monkeypatch):
     from services import watermark
 
     monkeypatch.setattr(watermark, "is_enabled", lambda: True)
     monkeypatch.setattr(watermark, "_audioseal_available", True)
+    monkeypatch.setattr(watermark, "_generator", None)
+    monkeypatch.setattr(watermark, "_generator_checkpoint_cached", lambda: True)
+    assert watermark.will_mark() is True
+    monkeypatch.setattr(watermark, "_generator_checkpoint_cached", lambda: False)
+    assert watermark.will_mark() is False
+    monkeypatch.setattr(watermark, "_generator", object())
     assert watermark.will_mark() is True
     monkeypatch.setattr(watermark, "_audioseal_available", False)
     assert watermark.will_mark() is False

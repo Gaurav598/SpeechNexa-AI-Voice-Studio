@@ -1,0 +1,9 @@
+{
+  "productName": "SpeechNexa",
+  "appId": "com.speechnexa.desktop",
+  "ports": {
+    "backend": 3900,
+    "web": 3901,
+    "electronDev": 3902
+  }
+}

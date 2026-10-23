@@ -20,6 +20,6 @@ SpeechNexa is an AGPL-3.0-only derivative of VoiceStudio. Preserve original copy
 
 ## Publication
 
-Do not enable inherited release, store, CLA, sponsor, cloud or analytics automation by default. Review files, licenses, secret scans, tests and the destination before pushing. The owner authorized a one-time `main` history correction on 2026-10-24 to remove mistakenly imported upstream commits. After that correction, never force-push without a new explicit owner instruction; never publish to upstream. Merge only after review and passing current checks; verify `main` CI after a merge. Source status and known limitations are in `docs/IMPLEMENTATION_STATUS.md`.
+Do not enable inherited release, store, CLA, sponsor, cloud, analytics or dependency-bot automation by default. Review files, licenses, secret scans, tests and the destination before pushing. The owner authorized a one-time `main` history correction on 2026-10-24 to remove mistakenly imported upstream commits. After that correction, never force-push without a new explicit owner instruction; never publish to upstream. Merge only after review and passing current checks; verify `main` CI after a merge. Source status and known limitations are in `docs/IMPLEMENTATION_STATUS.md`.
 
 Project skills pinned by `skills-lock.json` are installed under `.agents/skills/` for FastAPI and Vite. Repository rules and current tests override generic skill advice.

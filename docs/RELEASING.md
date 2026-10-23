@@ -53,7 +53,7 @@ python scripts/generate_model_license_data.py --check
 These checks support a review; they do not establish third-party media or
 binary redistribution rights. The active CI and security workflows have
 read-only repository permissions. No inherited release, store, CLA, sponsor,
-cloud or analytics automation should be enabled as part of a source push.
+cloud, analytics or dependency-bot automation should be enabled as part of a source push.
 
 ## Versioning
 

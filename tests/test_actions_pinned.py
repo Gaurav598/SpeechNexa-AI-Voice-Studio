@@ -4,7 +4,7 @@ A tag (``@v4``) or branch (``@stable``) is a mutable pointer: whoever controls
 the action's repository can move it, and the next CI run executes the new code
 with this repo's secrets (Docker Hub / GHCR push tokens, release upload). A
 40-hex commit SHA is immutable. The trailing ``# vX.Y.Z`` comment keeps the pin
-human-readable and lets Dependabot (``.github/dependabot.yml``) bump it.
+human-readable for manual owner review when pins need updating.
 
 Local (``./``) actions and ``docker://`` images are exempt.
 """
@@ -108,7 +108,10 @@ def test_pins_carry_version_comment():
     assert not bad, "Add a '# vX.Y.Z' comment after each SHA pin:\n" + "\n".join(bad)
 
 
-def test_dependabot_tracks_github_actions():
-    cfg = yaml.safe_load((_GITHUB / "dependabot.yml").read_text(encoding="utf-8"))
+def test_inherited_dependabot_updates_are_archived():
+    assert not (_GITHUB / "dependabot.yml").exists()
+    cfg = yaml.safe_load(
+        (_ROOT / "docs/archive/upstream-github-config/dependabot.yml").read_text(encoding="utf-8")
+    )
     ecosystems = {u.get("package-ecosystem") for u in cfg.get("updates", [])}
     assert "github-actions" in ecosystems

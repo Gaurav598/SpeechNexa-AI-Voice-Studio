@@ -17,6 +17,7 @@ from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Query, Depends
 from core.browser_guard import reject_cross_site_get
+from core.logging_utils import log_safe
 
 logger = logging.getLogger("omnivoice.setup.models")
 router = APIRouter()
@@ -495,8 +496,8 @@ def is_cached(repo_id: str) -> bool:
         # at WARNING with the exception type (MM2-09) so this fallback isn't
         # invisible when triaging a Windows cache report — it previously logged
         # at DEBUG and never showed at the default level.
-        logger.warning("is_cached: scan_cache_dir failed (%s: %s); using on-disk fallback for %s",
-                       type(e).__name__, e, repo_id)
+        logger.warning("is_cached: scan_cache_dir failed (%s; details withheld); using on-disk fallback for %s",
+                       type(e).__name__, log_safe(repo_id))
         return _is_cached_on_disk(repo_id)
 
 

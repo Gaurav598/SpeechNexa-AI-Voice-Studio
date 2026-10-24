@@ -4,30 +4,30 @@
 # Settings that cannot live in code: docs/maintainers/repository-settings.md
 
 # Governance and CI
-/.github/CODEOWNERS                    @debpalash
-/.github/workflows/                    @debpalash
-/.github/scripts/                      @debpalash
+/.github/CODEOWNERS                    @Gaurav598
+/.github/workflows/                    @Gaurav598
+/.github/scripts/                      @Gaurav598
 
 # Licensing and contributor agreements
-/LICENSE                               @debpalash
-/LICENSE-NOTICE.md                     @debpalash
-/.github/CLA-*.md                      @debpalash
-/.github/CCLA-*.md                     @debpalash
+/LICENSE                               @Gaurav598
+/LICENSE-NOTICE.md                     @Gaurav598
+/.github/CLA-*.md                      @Gaurav598
+/.github/CCLA-*.md                     @Gaurav598
 
 # Release, packaging, and container builds
-/electron/electron-builder.config.mjs  @debpalash
-/electron/build/                       @debpalash
-/electron/scripts/embed-appimage-update.mjs @debpalash
-/scripts/prepare_electron_release.py   @debpalash
-/scripts/check_electron_release_assets.py @debpalash
-/scripts/clear-release-rerun-assets.py @debpalash
-/scripts/verify-macos-signing.sh       @debpalash
-/deploy/                               @debpalash
-/docs/RELEASING.md                     @debpalash
+/electron/electron-builder.config.mjs  @Gaurav598
+/electron/build/                       @Gaurav598
+/electron/scripts/embed-appimage-update.mjs @Gaurav598
+/scripts/prepare_electron_release.py   @Gaurav598
+/scripts/check_electron_release_assets.py @Gaurav598
+/scripts/clear-release-rerun-assets.py @Gaurav598
+/scripts/verify-macos-signing.sh       @Gaurav598
+/deploy/                               @Gaurav598
+/docs/RELEASING.md                     @Gaurav598
 
 # Version source, its mirrors, and lockfiles
-/package.json                          @debpalash
-/pyproject.toml                        @debpalash
-/backend/core/version.py               @debpalash
-/bun.lock                              @debpalash
-/uv.lock                               @debpalash
+/package.json                          @Gaurav598
+/pyproject.toml                        @Gaurav598
+/backend/core/version.py               @Gaurav598
+/bun.lock                              @Gaurav598
+/uv.lock                               @Gaurav598

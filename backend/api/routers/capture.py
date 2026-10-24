@@ -24,6 +24,7 @@ import time
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 from typing import Optional
 from core.path_security import upload_suffix
+from core.logging_utils import log_safe
 
 router = APIRouter()
 logger = logging.getLogger("omnivoice.capture")
@@ -325,7 +326,7 @@ async def transcribe_audio(
 
         logger.info(
             "Capture transcription done: engine=%s, elapsed=%.2fs, duration=%.1fs, mode=%s, refined=%s",
-            engine_id, elapsed, duration, requested_mode if use_active_asr else "fast",
+            log_safe(engine_id), elapsed, duration, log_safe(requested_mode) if use_active_asr else "fast",
             refined_text is not None,
         )
 

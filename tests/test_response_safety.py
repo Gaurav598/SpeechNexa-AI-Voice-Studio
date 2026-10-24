@@ -2,12 +2,80 @@
 from __future__ import annotations
 
 import logging
+import pytest
 
 _PRIVATE = (
     "Traceback (most recent call last):\n"
     '  File "/home/alice/private/project.py", line 7\n'
     "RuntimeError: hf_abcdefghijklmnopqrstuvwxyz1234567890"
 )
+
+
+def test_watermark_detector_failure_never_returns_private_exception(monkeypatch):
+    import torch
+    from services import watermark
+
+    monkeypatch.setattr(watermark, "_check_available", lambda: True)
+
+    def failed_detector():
+        raise RuntimeError(_PRIVATE)
+
+    monkeypatch.setattr(watermark, "_get_detector", failed_detector)
+    result = watermark.detect_watermark(torch.zeros(1, 24000), 24000)
+
+    assert result["is_watermarked"] is False
+    assert result["error"] == "Watermark detection failed; check the backend log for details."
+    assert _PRIVATE not in str(result)
+
+
+@pytest.mark.asyncio
+async def test_argos_pack_failure_never_returns_private_exception(monkeypatch):
+    from api.routers.dub_translate import dub_translate
+    from schemas.requests import TranslateRequest
+    from services import translation_engines
+
+    calls = []
+    def failed_pack_check(*_args):
+        calls.append(True)
+        raise ValueError(_PRIVATE)
+
+    monkeypatch.setattr(translation_engines, "argos_pack_status", failed_pack_check)
+    # The optional package may be absent; install only fake modules in this test.
+    import sys
+    import types
+    monkeypatch.setitem(sys.modules, "argostranslate", types.ModuleType("argostranslate"))
+    monkeypatch.setitem(sys.modules, "argostranslate.translate", types.ModuleType("argostranslate.translate"))
+    result = await dub_translate(TranslateRequest(
+        provider="argos", source_lang="en", target_lang="es",
+        segments=[{"id": "1", "text": "Hello"}],
+    ))
+
+    assert result.status_code == 422
+    assert calls
+    assert b"/home/alice/private" not in result.body
+    assert b"hf_abcdefghijklmnopqrstuvwxyz1234567890" not in result.body
+
+
+@pytest.mark.asyncio
+async def test_legacy_dub_transcribe_failure_never_returns_private_exception(monkeypatch):
+    from fastapi import HTTPException
+    from api.routers import dub_core
+    from services import asr_backend
+
+    monkeypatch.setattr(dub_core, "_get_job", lambda _id: {"segments": []})
+    monkeypatch.setattr(dub_core, "should_preload_tts_asr", lambda: False)
+    monkeypatch.setattr(asr_backend, "asr_model_missing_error", lambda: None)
+    monkeypatch.setattr(dub_core, "_ensure_diarisation_accepted", lambda: None)
+
+    async def failed_transcribe(*_args, **_kwargs):
+        raise RuntimeError(_PRIVATE)
+
+    monkeypatch.setattr(dub_core, "run_transcribe_guarded", failed_transcribe)
+    with pytest.raises(HTTPException) as caught:
+        await dub_core.dub_transcribe("safe-job")
+
+    assert caught.value.status_code == 500
+    assert _PRIVATE not in str(caught.value.detail)
 
 
 def test_public_failure_logs_only_stable_class_and_returns_fixed_text(caplog):

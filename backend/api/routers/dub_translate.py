@@ -844,7 +844,15 @@ async def dub_translate(req: TranslateRequest):
             try:
                 pack_status = translation_engines.argos_pack_status(src_lang, target_codes)
             except (ImportError, ValueError) as exc:
-                return JSONResponse(status_code=422, content={"error": str(exc)})
+                from core.public_errors import public_failure
+
+                error = public_failure(
+                    logger,
+                    "Argos package check failed",
+                    exc,
+                    response="Could not check installed Argos language packs. Check the backend log for details.",
+                )
+                return JSONResponse(status_code=422, content={"error": error})
             missing_packs = [
                 pair for pair in pack_status["pairs"] if not pair["installed"]
             ]

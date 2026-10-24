@@ -9,19 +9,11 @@ import { createServer } from 'node:http';
 import { createRequire } from 'node:module';
 
 const require = createRequire(import.meta.url);
-const scratch = mkdtempSync(join(tmpdir(), 'voicestudio-site-browser-'));
-const escapeHtml = (value) =>
-  String(value)
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#39;');
-const server = createServer((req, res) => {
-  const safeUrl = escapeHtml(req.url ?? '');
-  res.setHeader('Content-Type', 'text/html');
+const scratch = mkdtempSync(join(tmpdir(), 'speechnexa-site-browser-'));
+const server = createServer((_req, res) => {
+  res.setHeader('Content-Type', 'text/html; charset=utf-8');
   res.end(
-    `<title>${safeUrl}</title><h1>${safeUrl}</h1><a href="/two" target="_blank">Next page</a>`,
+    '<title>Local test page</title><h1>Local test page</h1><a href="/two" target="_blank">Next page</a>',
   );
 });
 let app;
@@ -84,7 +76,7 @@ try {
     workspace.style.cssText = 'position:fixed;left:220px;top:60px;right:0;bottom:40px';
     const anchor = document.createElement('button');
     anchor.id = 'smoke-anchor';
-    anchor.textContent = 'VoiceStudio.sh Open Source';
+    anchor.textContent = 'SpeechNexa Open Source';
     anchor.style.cssText = 'position:absolute;left:24px;top:24px;height:32px';
     const draft = document.createElement('input');
     draft.id = 'smoke-draft';
@@ -201,30 +193,6 @@ try {
     assert.ok(fits, `modal and native page fit after resize to ${width}x${height} at ${zoom} zoom`);
   }
   assert.equal((await state()).url, origin + '/typed');
-  // Optional owner-triggered live-site check; normal CI remains local-only.
-  if (process.env.VOICESTUDIO_BROWSER_LIVE_CHECK === '1') {
-    await toolbar.evaluate(() => window.voicestudio.browser.navigate('https://voicestudio.sh/'));
-    let live = await state();
-    for (let attempt = 0; attempt < 120; attempt++) {
-      if (live.error || (!live.loading && live.title.includes('VoiceStudio'))) break;
-      await toolbar.waitForTimeout(250);
-      live = await state();
-    }
-    assert.equal(live.loading, false, 'official website finishes loading');
-    assert.match(live.title, /VoiceStudio/);
-    assert.equal(live.error, false, 'official website loads in the isolated native view');
-    assert.equal(await toolbar.getByRole('alert').count(), 0, 'no browser action or bounds errors');
-    assert.equal(await remote('location.hostname'), 'voicestudio.sh');
-    assert.ok((await remote('document.body.innerText')).length > 100);
-    console.log(
-      'Live website preview passed:',
-      JSON.stringify({
-        state: live,
-        remoteTitle: await remote('document.title'),
-        host: await remote('location.hostname'),
-      }),
-    );
-  }
   await toolbar.getByRole('button', { name: 'Back to Studio', exact: true }).click();
   await toolbar.locator('.site-browser-page').waitFor({ state: 'detached' });
   assert.equal(parent.url(), originalUrl);
@@ -243,6 +211,6 @@ try {
   await app?.close();
   await new Promise((resolve) => server.close(resolve));
   // scratch is the exact directory returned by mkdtemp, never a caller-supplied path.
-  if (scratch.startsWith(join(tmpdir(), 'voicestudio-site-browser-')))
+  if (scratch.startsWith(join(tmpdir(), 'speechnexa-site-browser-')))
     rmSync(scratch, { recursive: true, force: true, maxRetries: 3 });
 }

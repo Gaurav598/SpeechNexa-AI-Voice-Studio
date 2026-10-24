@@ -34,6 +34,7 @@ from typing import Optional
 import torch
 
 from core.prefs import resolve
+from core.public_errors import public_failure
 
 logger = logging.getLogger("omnivoice.watermark")
 
@@ -641,13 +642,18 @@ def detect_watermark(
         }
 
     except Exception as e:
-        logger.warning("Watermark detection failed: %s", e, exc_info=True)
+        error = public_failure(
+            logger,
+            "Watermark detection failed",
+            e,
+            response="Watermark detection failed; check the backend log for details.",
+        )
         return {
             "is_watermarked": False,
             "confidence": 0.0,
             "message_bits": "",
             "is_omnivoice": False,
-            "error": str(e),
+            "error": error,
         }
 
 

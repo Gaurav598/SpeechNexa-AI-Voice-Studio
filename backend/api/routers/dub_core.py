@@ -2674,6 +2674,12 @@ async def dub_transcribe(job_id: str, num_speakers: Optional[int] = None):
     except asyncio.CancelledError:
         raise
     except Exception as e:
-        import traceback
-        traceback.print_exc()
-        raise HTTPException(status_code=500, detail=str(e))
+        from core.public_errors import public_failure
+
+        detail = public_failure(
+            logger,
+            "Legacy dub transcription failed",
+            e,
+            response="Transcription failed; check the backend log for details.",
+        )
+        raise HTTPException(status_code=500, detail=detail) from e

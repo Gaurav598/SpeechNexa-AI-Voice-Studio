@@ -41,12 +41,32 @@ previous job deliberately reported findings without failing the workflow.
   retained across PIN rotation, so overlapping share-session requests cannot
   reset it. A successful PIN clears that client's failures. The listener
   remains loopback-only until the user enables sharing.
-- Gitleaks 8.30.1 scanned the two commits reachable from `main` (about 40 MB)
+- Gitleaks 8.30.1 scanned the three commits reachable from published `main` (about 40 MB)
   and the staged publication changes; both found zero leaks. A separate copy
   of all present tracked and non-ignored source files (about 60 MB scanned)
   also found zero leaks. The local checkout
-  contains read-only upstream remote refs; scanning *all local refs* finds
-  three old upstream findings and is not a verdict on SpeechNexa's `main`.
+  retains 43 inherited local tags outside `main`; scanning *all local refs*
+  finds three old upstream findings and is not a verdict on SpeechNexa's
+  published `main`. GitHub has no tags or other branches.
+
+## Current CodeQL triage
+
+The first valid public CodeQL run succeeded at `f8f9bac7` and reported 624
+current-code alerts: 521 note, 70 warning and 33 error. Scan success means
+analysis completed, not that all findings were fixed. Focused review found
+three raw exception-to-response disclosures (watermark detection, optional
+Argos package checking and legacy dubbing transcription), two unsafe log
+fields, and a reflected URL in a test-only HTML fixture. These were fixed in
+the follow-up source change with fail-before/pass-after response tests;
+165 affected tests passed with seven unexpected passes. The CodeQL scan after
+that change is required to confirm which alerts close.
+
+The other reviewed error-level findings include a fixed-message SSE failure
+wrapper, intentional opt-in LAN binding protected by PIN and per-client
+limits, and path operations with basename validation, resolved-path
+containment or native-only guards. They are not broadly dismissed; remaining
+alerts need rule-by-rule review. In particular, CodeQL source paths alone do
+not prove an unauthenticated traversal exploit or a safe false positive.
 
 ## Bandit review
 

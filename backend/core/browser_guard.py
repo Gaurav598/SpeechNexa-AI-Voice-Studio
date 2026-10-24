@@ -67,15 +67,15 @@ _DEFAULT_HOSTS = frozenset({
 _CROSS_SITE_FETCH = frozenset({"cross-site", "same-site"})
 
 CROSS_SITE_DETAIL = (
-    "Request refused: it came from another website. The VoiceStudio API only "
+    "Request refused: it came from another website. The SpeechNexa API only "
     "accepts browser requests from its own interface. To use the API from "
     "another web app, add its origin to OMNIVOICE_ALLOWED_ORIGINS."
 )
 HOST_DETAIL = (
-    "Request refused: VoiceStudio was addressed by an unrecognized host name. "
+    "Request refused: SpeechNexa was addressed by an unrecognized host name. "
     "Open it via localhost or an IP address, send the API key, or add the "
     f"host name to OMNIVOICE_ALLOWED_HOSTS ({DESKTOP_ENV_FILE_HINT}) and "
-    "restart VoiceStudio."
+    "restart SpeechNexa."
 )
 
 

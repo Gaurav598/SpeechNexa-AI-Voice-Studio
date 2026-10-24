@@ -25,17 +25,17 @@ const SOURCES = [
 ];
 export const UV_VERSION = '0.12.13';
 export const CUDNN8_COMPAT_PIN = 'nvidia-cudnn-cu12==8.9.7.29';
-export const ROCM_TORCH_INDEX = 'https://download.pytorch.org/whl/rocm6.4';
+export const ROCM_TORCH_INDEX = 'https://download.pytorch.org/whl/rocm7.1';
 export const ROCM_TORCH_PINS = [
-  'torch==2.8.0',
-  'torchaudio==2.8.0',
-  'torchvision==0.23.0',
+  'torch==2.10.0',
+  'torchaudio==2.10.0',
+  'torchvision==0.25.0',
 ] as const;
 /**
  * Whether this OS can have the ROCm torch stack at all.
  *
  * PyTorch's ROCm index (`ROCM_TORCH_INDEX`) publishes Linux wheels only. On
- * Windows `uv pip install --index-url <rocm6.4> torch==2.8.0` finds nothing and
+ * Windows `uv pip install --index-url <rocm7.1> torch==2.10.0` finds nothing and
  * the whole runtime bootstrap fails, leaving the app unusable instead of merely
  * CPU-bound - so the opt-in is ignored there and the host resolves like any
  * other (Settings > Performance explains which engines can still use a Radeon).
@@ -62,9 +62,9 @@ export function rocmTorchOptIn(platform: NodeJS.Platform = process.platform): bo
  */
 export const CPU_TORCH_INDEX = 'https://download.pytorch.org/whl/cpu';
 export const CPU_TORCH_PINS = [
-  'torch==2.8.0+cpu',
-  'torchaudio==2.8.0+cpu',
-  'torchvision==0.23.0+cpu',
+  'torch==2.10.0+cpu',
+  'torchaudio==2.10.0+cpu',
+  'torchvision==0.25.0+cpu',
 ] as const;
 export const CPU_TORCH_ARGS = [
   '--extra-index-url',

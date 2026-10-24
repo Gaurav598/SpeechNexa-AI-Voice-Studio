@@ -8,7 +8,7 @@ const english = JSON.parse(await readFile(new URL('en.json', directory), 'utf8')
 const placeholders = (text) =>
   [...text.matchAll(/{{\s*([^}]+?)\s*}}/g)].map((match) => match[1]).sort();
 const protectedNames = [
-  'VoiceStudio',
+  'SpeechNexa',
   'Hugging Face',
   'OmniVoice',
   'Faster-Whisper',
@@ -19,6 +19,7 @@ const protectedNames = [
 ];
 function inspect(value, path, source) {
   if (typeof value === 'string') {
+    if (/\bVoiceStudio\b/.test(value)) failures.push(`${path}: inherited product name`);
     if (
       /\?{3,}|\uFFFD|Error 500 \(Server Error\)|There was an error\. Please try again later|<span\s+data-ph=|ZXQPH\d+QXZ/.test(
         value,

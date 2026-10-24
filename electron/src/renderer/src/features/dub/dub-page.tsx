@@ -1844,7 +1844,7 @@ export function DubPage() {
                       >
                         {t('asr_missing.choose')}
                       </Link>
-                      <AgentFixButton request="Restore local ASR readiness for this Dubbing job. Install and activate the best supported Faster-Whisper model through VoiceStudio's setup interfaces, preserve the prepared media, and leave transcription ready to retry." />
+                      <AgentFixButton request="Restore local ASR readiness for this Dubbing job. Install and activate the best supported Faster-Whisper model through SpeechNexa's setup interfaces, preserve the prepared media, and leave transcription ready to retry." />
                     </div>
                   )
                 ) : (

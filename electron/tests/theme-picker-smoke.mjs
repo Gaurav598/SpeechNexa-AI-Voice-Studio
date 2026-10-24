@@ -29,7 +29,7 @@ try {
     (process.env.VOICESTUDIO_UI_URL || 'http://localhost:3928') + '/#/settings/appearance',
   );
   const dark = page.getByRole('group', { name: 'Dark', exact: true });
-  const original = dark.getByRole('button', { name: 'VoiceStudio Original', exact: true });
+  const original = dark.getByRole('button', { name: 'SpeechNexa Original', exact: true });
   assert.equal(
     await dark.getByRole('button', { name: 'Studio', exact: true }).getAttribute('aria-pressed'),
     'true',

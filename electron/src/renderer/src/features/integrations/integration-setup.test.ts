@@ -80,7 +80,7 @@ it('exports a manual n8n workflow to the current backend without credentials', (
   expect(request.parameters.method).toBe('POST');
   expect(JSON.parse(request.parameters.jsonBody)).toEqual({
     model: 'tts-1',
-    input: 'VoiceStudio',
+    input: 'SpeechNexa',
     voice: 'default',
     response_format: 'wav',
   });
@@ -157,12 +157,12 @@ it('backs every "Works with VoiceStudio" entry with a real catalog route, blocks
   expect(integrationSetup('constructor')).toBeUndefined();
 });
 it('gives the API and container cards runnable snippets for the right endpoints and images', () => {
-  const api = INTEGRATION_SETUPS['voicestudio-api'].blocks('http://127.0.0.1:3912/')!;
+  const api = INTEGRATION_SETUPS['speechnexa-api'].blocks('http://127.0.0.1:3912/')!;
   const text = api.map((block) => block.text).join('\n');
   expect(text).toContain('curl http://127.0.0.1:3912/v1/audio/speech');
   expect(text).toContain('curl http://127.0.0.1:3912/v1/audio/transcriptions');
   expect(text).toContain('base_url="http://127.0.0.1:3912/v1"');
-  expect(INTEGRATION_SETUPS['voicestudio-api'].blocks('https://u:p@host')).toBeNull();
+  expect(INTEGRATION_SETUPS['speechnexa-api'].blocks('https://u:p@host')).toBeNull();
   const docker = INTEGRATION_SETUPS.docker
     .blocks('')!
     .map((block) => block.text)
@@ -186,7 +186,7 @@ it('keeps remote scheme, path prefix and credential placeholders without exporti
   const remote = 'https://gpu.example/voicestudio/';
   const [http, stdio] = INTEGRATION_SETUPS['model-context-protocol'].blocks(remote)!;
   expect(http.text).toContain('Header: Authorization: Bearer $OMNIVOICE_API_KEY');
-  expect(INTEGRATION_SETUPS['voicestudio-api'].blocks(remote)![0].hintKey).toBe(
+  expect(INTEGRATION_SETUPS['speechnexa-api'].blocks(remote)![0].hintKey).toBe(
     'integrationCatalog.apiBearerHint',
   );
   expect(JSON.parse(stdio.text).mcpServers.voicestudio.env).toEqual({
@@ -194,7 +194,7 @@ it('keeps remote scheme, path prefix and credential placeholders without exporti
     OMNIVOICE_CLIENT_ID: '<your-client-id>',
     OMNIVOICE_API_KEY: '<backend API key>',
   });
-  const api = INTEGRATION_SETUPS['voicestudio-api'].blocks(remote)!;
+  const api = INTEGRATION_SETUPS['speechnexa-api'].blocks(remote)!;
   for (const id of ['speech', 'transcription'])
     expect(api.find((block) => block.id === id)!.text).toContain(
       '-H "Authorization: Bearer $OMNIVOICE_API_KEY"',
@@ -220,13 +220,13 @@ it('never sends an API key to a remote plain-http backend', () => {
     expect(mcpSetup(slug, insecure)!.text).not.toMatch(/Authorization|bearer_token/);
   const stdio = INTEGRATION_SETUPS['model-context-protocol'].blocks(insecure)![1];
   expect(JSON.parse(stdio.text).mcpServers.voicestudio.env.OMNIVOICE_API_KEY).toBeUndefined();
-  const api = INTEGRATION_SETUPS['voicestudio-api']
+  const api = INTEGRATION_SETUPS['speechnexa-api']
     .blocks(insecure)!
     .map((block) => block.text)
     .join('\n');
   expect(api).not.toContain('Authorization');
   expect(api).not.toContain('os.environ');
-  expect(INTEGRATION_SETUPS['voicestudio-api'].blocks(insecure)![0].hintKey).toBe(
+  expect(INTEGRATION_SETUPS['speechnexa-api'].blocks(insecure)![0].hintKey).toBe(
     'integrationCatalog.apiInsecureHint',
   );
   expect(INTEGRATION_SETUPS['model-context-protocol'].blocks(insecure)![0].text).not.toContain(

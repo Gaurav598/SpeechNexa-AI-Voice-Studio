@@ -51,7 +51,7 @@ def dev_ui_redirect(client_host: str | None, host_header: str, ui_port: int) -> 
     Only a browser on this machine that addressed the backend by a loopback
     name is sent to the local dev UI. Anyone else (a LAN device, or a remote
     client relayed through a loopback proxy such as ``tailscale serve``) would
-    be sent to *their own* localhost, which is never VoiceStudio (#2599).
+    be sent to *their own* localhost, which is never SpeechNexa (#2599).
     """
     if client_host not in _LOOPBACK_NAMES:
         return None
@@ -65,8 +65,8 @@ def dev_ui_redirect(client_host: str | None, host_header: str, ui_port: int) -> 
 
 
 WEB_UI_MISSING = (
-    "VoiceStudio is running, but this installation has no web interface to "
-    "serve to other devices. Update the VoiceStudio desktop app to the latest "
+    "SpeechNexa is running, but this installation has no web interface to "
+    "serve to other devices. Update the SpeechNexa desktop app to the latest "
     "version; in a source checkout run `bun run build:web` and restart the "
     "backend. The API itself is available."
 )
@@ -79,7 +79,7 @@ def web_ui_missing_body(accept: str) -> tuple[str, str]:
         return "text/html", (
             '<!doctype html><html lang="en"><head><meta charset="utf-8">'
             '<meta name="viewport" content="width=device-width,initial-scale=1">'
-            "<title>VoiceStudio web interface unavailable</title></head>"
+            "<title>SpeechNexa web interface unavailable</title></head>"
             "<body><h1>Web interface unavailable</h1>"
             f"<p>{message}</p></body></html>"
         )

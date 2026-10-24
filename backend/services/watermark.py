@@ -635,7 +635,9 @@ def detect_watermark(
             "confidence": round(confidence, 4),
             "message_bits": message_bits,
             "is_omnivoice": is_omnivoice,
-            "source": "VoiceStudio" if is_omnivoice else "unknown",
+            # The inherited OM bit pattern identifies the watermark format,
+            # not which derivative generated the recording.
+            "source": "OmniVoice-compatible" if is_omnivoice else "unknown",
         }
 
     except Exception as e:

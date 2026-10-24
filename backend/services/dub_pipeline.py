@@ -1180,7 +1180,7 @@ def yt_download_sync(
         raise OSError(
             f"Unable to download video: unable to open for writing in "
             f"{job_dir} ({_target_facts}). The video downloads into this job "
-            f"folder under your VoiceStudio data directory — check it exists, is "
+            f"folder under your SpeechNexa data directory — check it exists, is "
             f"writable, and isn't locked by antivirus or a cloud-sync client."
         )
     ydl_opts: dict = {

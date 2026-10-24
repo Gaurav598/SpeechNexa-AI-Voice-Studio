@@ -105,9 +105,9 @@ async function handle(request: JsonRpcRequest): Promise<void> {
       tools: [
         {
           name: 'api_request',
-          title: 'VoiceStudio app API',
+          title: 'SpeechNexa app API',
           description:
-            'Read or update the running VoiceStudio app through its session-scoped repair bridge. Use /openapi.json to discover backend routes and /__voicestudio/status plus the Electron controls listed in the repair context for backend recovery.',
+            'Read or update the running SpeechNexa app through its session-scoped repair bridge. Use /openapi.json to discover backend routes and /__voicestudio/status plus the Electron controls listed in the repair context for backend recovery.',
           inputSchema: {
             type: 'object',
             properties: {
@@ -129,7 +129,7 @@ async function handle(request: JsonRpcRequest): Promise<void> {
   }
   if (request.method === 'tools/call') {
     if (request.params?.name !== 'api_request') {
-      error(request.id, -32602, 'Unknown VoiceStudio repair tool');
+      error(request.id, -32602, 'Unknown SpeechNexa repair tool');
       return;
     }
     try {
@@ -142,7 +142,7 @@ async function handle(request: JsonRpcRequest): Promise<void> {
         content: [
           {
             type: 'text',
-            text: reason instanceof Error ? reason.message : 'VoiceStudio API request failed',
+            text: reason instanceof Error ? reason.message : 'SpeechNexa API request failed',
           },
         ],
         isError: true,

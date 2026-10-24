@@ -259,7 +259,7 @@ it('attaches to a healthy replacement instead of reporting its exited child as c
   expect(supervisor.status.stage).toBe('ready');
   expect(supervisor.status.managed).toBe(false);
   expect(supervisor.status.exitCode).toBeUndefined();
-  expect(supervisor.status.logTail).toContain('Attached to the replacement VoiceStudio backend.');
+  expect(supervisor.status.logTail).toContain('Attached to the replacement SpeechNexa backend.');
   await supervisor.shutdown();
   vi.useRealTimers();
 });

@@ -132,7 +132,7 @@ export default {
     voicestudioDistribution: DISTRIBUTION_TARGET,
     voicestudioUpdateOwner: DISTRIBUTION_PROFILE.applicationUpdates,
     ...(DISTRIBUTION_TARGET === 'microsoft-store'
-      ? { author: { name: storeIdentity.publisherLegalName, email: 'hi@voicestudio.sh' } }
+      ? { author: { name: storeIdentity.publisherLegalName } }
       : {}),
   },
   directories: { output: 'release', buildResources: 'build' },

@@ -451,7 +451,7 @@ def format_text(report: dict) -> str:
     """
     tag = {OK: "[ OK ]", WARN: "[WARN]", FAIL: "[FAIL]"}
     lines = [
-        f"VoiceStudio self-check - v{report['app_version']} on {report['platform']}",
+        f"SpeechNexa self-check - v{report['app_version']} on {report['platform']}",
         "",
     ]
     for c in report["checks"]:

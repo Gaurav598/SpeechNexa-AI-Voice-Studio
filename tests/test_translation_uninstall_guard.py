@@ -1,6 +1,6 @@
 """Uninstalling a translation engine must never break the app or another engine (#2019).
 
-`pip uninstall` acts on VoiceStudio's own environment. The LLM engine's package
+`pip uninstall` acts on SpeechNexa's own environment. The LLM engine's package
 (openai) is a core dependency of the app, and deep_translator backs four online
 engines at once, so removing either through one engine broke something else.
 """
@@ -32,7 +32,7 @@ def _uninstall(monkeypatch, engine_id, *, pip=None):
 def test_every_engine_backed_by_an_app_dependency_is_builtin():
     _, te = _router()
     core = te._app_dependency_names()
-    assert "openai" in core and "argostranslate" in core  # the metadata is readable here
+    assert "openai" in core and "argostranslate" not in core
     for engine_id, entry in te.REGISTRY.items():
         pkg = entry.get("pip_package")
         if pkg and te._normalize(pkg) in core:
@@ -46,7 +46,7 @@ def test_a_package_the_app_depends_on_is_never_uninstalled(monkeypatch):
     with pytest.raises(HTTPException) as err:
         _uninstall(monkeypatch, "x-llm")
     assert err.value.status_code == 400
-    assert "VoiceStudio itself" in err.value.detail
+    assert "SpeechNexa itself" in err.value.detail
 
 
 def test_a_package_other_engines_share_is_never_uninstalled(monkeypatch):

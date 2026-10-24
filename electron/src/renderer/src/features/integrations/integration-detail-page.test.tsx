@@ -31,7 +31,7 @@ vi.mock('@/hooks/use-backend-status', () => ({
 const toast = vi.hoisted(() => ({ success: vi.fn(), error: vi.fn() }));
 vi.mock('sonner', () => ({ toast }));
 vi.mock('./twilio-setup', () => ({
-  TWILIO_DOCS: 'https://github.com/debpalash/VoiceStudio/blob/main/docs/integrations/twilio.md',
+  TWILIO_DOCS: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/integrations/twilio.md',
   TwilioSetup: ({
     hero,
     rail,
@@ -98,7 +98,7 @@ it('does not expose detail pages for entries without completed wiring', () => {
 });
 
 it('offers copyable API snippets for the current backend', () => {
-  route.slug = 'voicestudio-api';
+  route.slug = 'speechnexa-api';
   render(<IntegrationDetailPage />);
   expect(screen.getAllByRole('button', { name: 'Copy' })).toHaveLength(4);
   expect(

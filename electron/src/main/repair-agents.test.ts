@@ -135,7 +135,7 @@ describe('packaged app repair sessions', () => {
 
   it('places the OpenCode message before its variadic file option', () => {
     expect(openCodePromptArgs('C:\\temp\\request.md')).toEqual([
-      'Follow the attached VoiceStudio repair request.',
+      'Follow the attached SpeechNexa repair request.',
       '--file',
       'C:\\temp\\request.md',
     ]);
@@ -146,7 +146,7 @@ describe('packaged app repair sessions', () => {
 
     expect(prompt).toContain('No source checkout is attached');
     expect(prompt).toContain(
-      "Complete the user's current request through VoiceStudio's app API bridge",
+      "Complete the user's current request through SpeechNexa's app API bridge",
     );
     expect(prompt).toContain('VOICESTUDIO_REPAIR_CONTEXT_FILE');
     expect(prompt).toContain('Do not ask the user to repeat actions the API can perform');
@@ -158,6 +158,7 @@ describe('packaged app repair sessions', () => {
     expect(prompt).not.toContain('Read AGENTS.md');
     expect(prompt).not.toContain('branch is ready');
     expect(prompt).not.toContain('propose as a PR');
+    expect(prompt).not.toMatch(/\bVoiceStudio\b/);
   });
 
   it('directs checkout-free OpenCode to its only scoped MCP tool', () => {

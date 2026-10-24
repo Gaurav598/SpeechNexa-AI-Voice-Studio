@@ -12,7 +12,7 @@ from api.dependencies import is_local_host
 
 
 class UnsafeEndpoint(ValueError):
-    """The configured endpoint is outside VoiceStudio's trusted networks."""
+    """The configured endpoint is outside SpeechNexa's trusted networks."""
 
 
 class EndpointHTTPError(OSError):

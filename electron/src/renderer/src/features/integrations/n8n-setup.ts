@@ -14,7 +14,7 @@ export function n8nSetup(slug: string, baseUrl: string) {
   request.parameters.url = url;
   return {
     file: 'voicestudio-n8n.json',
-    docs: 'https://github.com/debpalash/VoiceStudio/blob/main/docs/integrations/n8n.md',
+    docs: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/integrations/n8n.md',
     text: JSON.stringify(workflow, null, 2),
   };
 }

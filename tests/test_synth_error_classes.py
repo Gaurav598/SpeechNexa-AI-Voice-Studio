@@ -59,12 +59,15 @@ def test_app_control_block_is_named_not_called_unrecognized(reraise, raw):
     assert "doesn't recognize" not in msg
     assert "Smart App Control" in msg
     assert "Flush button won't help" in msg
+    assert "Smart App Control → Off" not in msg
+    assert "Keep application control enabled" in msg
 
 
 def test_app_control_block_has_a_docs_class_and_hint():
     raw = "[WinError 4551] An Application Control policy has blocked this file"
     assert classify(raw) == "WINDOWS_APP_CONTROL_BLOCKED"
     assert "Smart App Control" in _HINTS["WINDOWS_APP_CONTROL_BLOCKED"]
+    assert "Smart App Control → Off" not in _HINTS["WINDOWS_APP_CONTROL_BLOCKED"]
 
 
 def test_app_control_block_is_not_reported_as_out_of_memory(reraise):

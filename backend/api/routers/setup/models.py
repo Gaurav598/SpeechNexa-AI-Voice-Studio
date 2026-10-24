@@ -252,7 +252,7 @@ def _hub_cache_roots() -> list[str]:
     HF stores repos under ``$HF_HUB_CACHE`` (== ``$HF_HOME/hub`` by default). When
     only ``HF_HOME`` (or the ``~/.cache/huggingface`` default) is known, the repos
     live under the ``hub`` subdir — so we probe both ``<dir>`` (the
-    ``HF_HUB_CACHE``-is-set case, e.g. VoiceStudio's Windows short cache) and
+    ``HF_HUB_CACHE``-is-set case, e.g. SpeechNexa's Windows short cache) and
     ``<dir>/hub`` (the ``HF_HOME``-only case). Without this the WinError-448
     fallback would look one level too high and miss the cache (CodeRabbit #137).
     """
@@ -718,28 +718,28 @@ def recommendations():
 
     if is_mac_arm:
         rationale = (
-            "Apple Silicon preset: VoiceStudio (required) covers multilingual TTS + "
+            "Apple Silicon preset: OmniVoice (required) covers multilingual TTS + "
             "cloning on its own. The optional picks are Metal-native: MLX Whisper "
             "large-v3 for dubbing/transcription, Whisper Turbo (MLX) + Parakeet TDT "
             "v3 for live dictation, Kokoro + KittenTTS for instant English TTS."
         )
     elif has_cuda:
         rationale = (
-            "NVIDIA preset: VoiceStudio (required) runs standalone. Optional ASR picks "
+            "NVIDIA preset: OmniVoice (required) runs standalone. Optional ASR picks "
             "are CUDA-accelerated via CTranslate2 — Whisper large-v3 for dubbing "
             "(best word timestamps) and Turbo for 5× faster transcription. Whisper "
             "Tiny provides broad-language local dictation. KittenTTS adds CPU-realtime English."
         )
     elif has_rocm:
         rationale = (
-            "AMD/ROCm preset: VoiceStudio (required) runs standalone. CTranslate2 has "
+            "AMD/ROCm preset: OmniVoice (required) runs standalone. CTranslate2 has "
             "no ROCm backend, so the PyTorch Whisper large-v3 build is the "
             "GPU-accelerated ASR route; faster-whisper works on CPU, and Whisper Tiny "
             "provides broad-language local dictation."
         )
     else:
         rationale = (
-            "CPU preset: VoiceStudio (required) runs standalone. Optional picks favour "
+            "CPU preset: OmniVoice (required) runs standalone. Optional picks favour "
             "speed on CPU — Whisper small (int8) as the light default, large-v3 for "
             "accuracy and Turbo when you can spare the time and RAM, Whisper Tiny "
             "(ONNX) for live dictation, KittenTTS for instant English TTS."

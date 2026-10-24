@@ -17,7 +17,7 @@ import type { AgentState, CallOutcome, ReadinessId, ReadinessItem } from '@/lib/
 import { cn } from '@/lib/utils';
 import { CALL_PHASES, callPhase } from './call-state';
 
-export const CALLS_DOCS = 'https://github.com/debpalash/VoiceStudio/blob/main/docs/calls.md';
+export const CALLS_DOCS = 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/calls.md';
 
 const OUTCOME_KEYS: Record<CallOutcome, string> = {
   booked: 'calls.outcome_booked',

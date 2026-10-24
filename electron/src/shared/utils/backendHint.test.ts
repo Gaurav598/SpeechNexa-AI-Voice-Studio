@@ -8,7 +8,7 @@ describe('backendFailureHints', () => {
   it('explains a launch the OS refused (#2440)', () => {
     expect(
       backendFailureHints(
-        'Could not start C:\\runtime\\python.exe: spawn UNKNOWN. Install or repair the local runtime, then restart VoiceStudio.',
+        'Could not start C:\\runtime\\python.exe: spawn UNKNOWN. Install or repair the local runtime, then restart SpeechNexa.',
       ),
     ).toEqual(['backend.hint_spawn_blocked']);
     expect(backendFailureHints('Could not start /x/python: spawn EACCES')).toEqual([

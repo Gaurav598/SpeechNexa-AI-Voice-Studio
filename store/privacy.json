@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "policyUrl": "https://voicestudio.sh/privacy",
+  "policyUrl": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/electron-privacy.md",
   "defaultBehavior": {
     "accountRequired": false,
     "analyticsEnabled": false,

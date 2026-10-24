@@ -68,7 +68,7 @@ def stream_failure(code: str, *, device: str | None = None) -> dict[str, object]
     """Return stable stream metadata selected only from an internal code.
 
     ``device`` (the dispatch's effective device family) only selects between
-    fixed VoiceStudio-owned wordings — it is never echoed. A CPU timeout is
+    fixed application-authored wordings — it is never echoed. A CPU timeout is
     "this machine is slow", not "your passage is too long", so it names the
     concrete remedies for that case (#2609).
     """
@@ -106,7 +106,7 @@ def stream_failure(code: str, *, device: str | None = None) -> dict[str, object]
             "code": "transcription_memory",
             "detail": (
                 "Transcription ran out of GPU memory. Close other GPU apps or "
-                "Flush models, then try again; VoiceStudio will use CPU when "
+                "Flush models, then try again; SpeechNexa will use CPU when "
                 "the remaining GPU memory is too low."
             ),
             "retryable": True,
@@ -123,11 +123,11 @@ def stream_failure(code: str, *, device: str | None = None) -> dict[str, object]
         "transcription_media_tool": {
             "code": "transcription_media_tool",
             "detail": (
-                "Transcription needs ffmpeg, which VoiceStudio could not find or "
+                "Transcription needs ffmpeg, which SpeechNexa could not find or "
                 "run. Open Settings → Audio tools and use Download/Repair, or "
                 "install ffmpeg (macOS: brew install ffmpeg; Windows: winget "
                 "install Gyan.FFmpeg; Linux: your package manager) and restart "
-                "VoiceStudio. You can also point FFMPEG_PATH at an ffmpeg binary."
+                "SpeechNexa. You can also point FFMPEG_PATH at an ffmpeg binary."
             ),
             "retryable": True,
         },
@@ -135,7 +135,7 @@ def stream_failure(code: str, *, device: str | None = None) -> dict[str, object]
             "code": "transcription_pipe_lost",
             "detail": (
                 "The backend lost its output pipe to the app while transcribing "
-                "(broken pipe). Restart VoiceStudio and try again."
+                "(broken pipe). Restart SpeechNexa and try again."
             ),
             "retryable": True,
         },
@@ -159,7 +159,7 @@ def transcription_failure_code(error: object) -> str:
     """Stable ``stream_failure`` code for a private ASR chunk exception.
 
     Only the exception's type, errno and filename are inspected locally; the
-    caller ships a VoiceStudio-owned message for the returned code, never the
+    caller ships a application-authored message for the returned code, never the
     exception text. A missing/unrunnable ffmpeg (``[Errno 2] ... 'ffmpeg'``,
     ``[WinError 193]``, :class:`MediaToolUnavailableError`) and a closed stdio
     pipe (``[Errno 32] Broken pipe``) each have a different remedy, so they must
@@ -201,7 +201,7 @@ def stream_generation_failure(error: BaseException | object) -> dict[str, object
     the floor for an *unrecognized* failure. When the private exception DOES
     classify to a known failure class — a corrupt model cache, an unreachable
     Hugging Face mirror, a missing ffmpeg/ffprobe, a Windows paging-file limit,
-    a SOCKS/TLS proxy problem, … — the stable VoiceStudio-owned remediation for
+    a SOCKS/TLS proxy problem, … — the stable application-authored remediation for
     that class is appended so the user can self-diagnose instead of guessing
     which engine or which failure. This is the same enrichment the classic
     (non-streaming) ``/generate`` 500 already gets via
@@ -209,7 +209,7 @@ def stream_generation_failure(error: BaseException | object) -> dict[str, object
     replaces the global 500 handler for a streaming request and used to bypass
     it entirely (#1607).
 
-    Only VoiceStudio-owned constants are copied — never a substring of
+    Only application-authored constants are copied — never a substring of
     ``error`` (Constitution I). Never raises: a diagnosis failure must not
     replace the failure being diagnosed.
     """
@@ -219,7 +219,7 @@ def stream_generation_failure(error: BaseException | object) -> dict[str, object
         # render the floor message "Generation failed. Check the selected
         # engine and try again." are indistinguishable in an auto-filed report,
         # so every unclassified streaming failure arrives as the same issue and
-        # none of them can be triaged (#1800). A class name is VoiceStudio-safe
+        # none of them can be triaged (#1800). A class name is SpeechNexa-safe
         # by the same reasoning that already puts it on the wire as
         # `error_class` in the dub routes and on the analytics allowlist: it is
         # a Python type, not user text, and no substring of `error` is copied.
@@ -267,7 +267,7 @@ def public_failure(
 ) -> str:
     """Log fixed failure metadata and return a fixed public failure message.
 
-    ``response`` must be authored by VoiceStudio, never derived from ``error``.
+    ``response`` must be authored by SpeechNexa, never derived from ``error``.
     The helper intentionally does not attempt to redact exception text: a
     deny-list cannot cover arbitrary secrets, paths, source lines or nested
     tracebacks.
@@ -292,7 +292,7 @@ def public_exception_response(error: BaseException, *, fallback: str) -> dict[st
     """Return fixed remediation selected by a stable failure taxonomy.
 
     Classification may inspect the private diagnostic locally, but response
-    values come exclusively from VoiceStudio-owned constants. No substring of
+    values come exclusively from application-authored constants. No substring of
     ``error`` is copied into the payload.
 
     Every caller is a CONTEXT-FREE surface — the global 500 handler, the
@@ -341,7 +341,7 @@ def public_exception_response(error: BaseException, *, fallback: str) -> dict[st
 # clock starts (#1033). That warm-up translated only a TIMEOUT into an
 # actionable reply. A download that FAILED — the mirror unreachable, DNS gone,
 # the connection refused, the body truncated, the cache corrupt — escaped the
-# route and reached the global 500 handler, which could only say "VoiceStudio
+# route and reached the global 500 handler, which could only say "SpeechNexa
 # hit an internal error": it named neither the engine nor the fact that a model
 # download was the thing that broke. #2298 is that report (KittenTTS, first
 # generate, an unreachable mirror). A download that stalls and a download that
@@ -357,7 +357,7 @@ def model_load_failure(engine_id: str, error: BaseException) -> dict[str, object
     cache names the repair — reusing ``public_exception_response`` so the
     context-free hint allowlist (#1943) applies here too.
 
-    Only VoiceStudio-owned constants reach the payload; no substring of
+    Only application-authored constants reach the payload; no substring of
     ``error`` is copied (Constitution I). The exception's TYPE NAME rides along
     as ``error_class`` so two load failures that render the same sentence are
     still distinguishable in an auto-filed report (the #1800 reasoning).

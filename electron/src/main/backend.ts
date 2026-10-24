@@ -457,8 +457,8 @@ export async function resolveSpawnPlan(
     if (!existsSync(join(root, 'pyproject.toml'))) {
       return {
         error:
-          `The Python environment in ${root} is missing (no ${relative(root, python)}), and this is not a VoiceStudio source checkout. ` +
-          'Install VoiceStudio from the release installer, or clone the repository and run `bun run setup:api` inside it.',
+          `The Python environment in ${root} is missing (no ${relative(root, python)}), and this is not a SpeechNexa source checkout. ` +
+          'Use a SpeechNexa source checkout and run `bun run setup:api` inside it.',
       };
     }
     return {
@@ -605,7 +605,7 @@ export function spawnFailureMessage(
   const launchRejected = ['ENOENT', 'UNKNOWN', 'EACCES', 'EPERM'].includes(code ?? '');
   if (!launchRejected) return `Could not start ${command}: ${detail}`;
   return runtimeOwned
-    ? `Could not start ${command}: ${detail}. Install or repair the local runtime, then restart VoiceStudio.`
+    ? `Could not start ${command}: ${detail}. Install or repair the local runtime, then restart SpeechNexa.`
     : `Could not start ${command}: ${detail}. Check that the program exists and can be launched, then try again.`;
 }
 
@@ -624,7 +624,7 @@ export function startupTimeoutMessage(
   if (!owned) return `${base} Nothing was spawned for this attempt.`;
   const advice =
     ' Slow disks and antivirus scanning of the runtime folder are the usual cause: click Retry, ' +
-    'exclude the VoiceStudio runtime folder from real-time scanning, or raise OMNIVOICE_STARTUP_BUDGET_S ' +
+    'exclude the SpeechNexa runtime folder from real-time scanning, or raise OMNIVOICE_STARTUP_BUDGET_S ' +
     '(for example 900).';
   return lastOutput
     ? `${base} Last output: ${lastOutput}${advice}`
@@ -1431,7 +1431,7 @@ export class BackendSupervisor extends EventEmitter<{
         if (gen !== this.generation || this.shuttingDown) return;
         this.exitCode = undefined;
         this.exitSignal = undefined;
-        this.pushLog('out', 'Attached to the replacement VoiceStudio backend.');
+        this.pushLog('out', 'Attached to the replacement SpeechNexa backend.');
         await this.markReady(gen, { managed: false, message: undefined }, true);
         return;
       }

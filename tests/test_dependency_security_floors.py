@@ -10,7 +10,7 @@ from packaging.version import Version
 PYTHON_FLOORS = {
     "aiohttp": "3.14.3",
     "cryptography": "50.0.0",
-    "gradio": "6.15.1",
+    "certifi": "2026.10.19",
     # Hydra instantiate and logging-config callable resolution, fixed in 1.3.7.
     "hydra-core": "1.3.7",
     # GHSA-qqmf-gpg7-g8gw: checkpoint _instantiator code execution, fixed in
@@ -18,15 +18,15 @@ PYTHON_FLOORS = {
     # still flags fixed releases; this floor is the real guard.
     "lightning": "2.6.6",
     "mako": "1.4.2",
-    "mcp": "1.28.1",
+    "mcp": "1.30.0",
     "msgpack": "1.2.1",
     "multidict": "6.9.1",
     "nltk": "3.10.0",
-    "pillow": "12.3.0",
+    "pillow": "13.0.0",
     "protobuf": "5.29.6",
     "pydantic-settings": "2.14.2",
     "pygments": "2.20.0",
-    "pypdf": "6.15.0",
+    "pypdf": "6.21.1",
     "pytorch-lightning": "2.6.6",
     "python-multipart": "0.0.31",
     "starlette": "1.3.1",
@@ -57,6 +57,17 @@ def test_python_security_floors_are_locked():
     resolved = _resolved_versions(lock["package"], PYTHON_FLOORS)
     assert resolved.keys() == PYTHON_FLOORS.keys()
     assert _versions_below_floors(resolved, PYTHON_FLOORS) == {}
+
+
+def test_default_lock_excludes_legacy_ui_and_vulnerable_argos_loader():
+    project = tomllib.loads(Path("pyproject.toml").read_text(encoding="utf-8"))
+    lock = tomllib.loads(Path("uv.lock").read_text(encoding="utf-8"))
+    locked = {package["name"] for package in lock["package"]}
+
+    assert "gradio" not in locked
+    assert "argostranslate" not in locked
+    assert "stanza" not in locked
+    assert "omnivoice-demo" not in project["project"]["scripts"]
 
 
 def test_duplicate_lock_entries_cannot_hide_a_vulnerable_version():

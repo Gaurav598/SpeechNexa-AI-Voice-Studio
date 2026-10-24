@@ -40,7 +40,7 @@ it('links to the shared contextual docs while preserving an explicit error class
   );
   expect(screen.getByRole('link', { name: 'errors.openDocs' })).toHaveAttribute(
     'href',
-    'https://github.com/debpalash/VoiceStudio/blob/main/docs/features/diarization.md#license-acceptance-flow',
+    'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/features/diarization.md#license-acceptance-flow',
   );
 });
 

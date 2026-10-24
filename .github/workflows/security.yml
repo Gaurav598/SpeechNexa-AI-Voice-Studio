@@ -4,15 +4,15 @@
 # with deterministic checks:
 #   • gitleaks   — secret scanning. HARD FAIL: a leaked credential fails CI
 #                  (not a required check; treat a red run as a merge blocker).
-#   • CodeQL     — Python + JS/TS SAST. Results land in the Security tab.
-#   • bandit     — Python SAST (SARIF → Security tab). Reporting, non-gating.
+#   • CodeQL     — Python + JS/TS SAST when code scanning is available (public).
+#   • bandit     — Python SAST, always retained as a JSON CI artifact.
 #   • pip-audit  — Python dependency advisories. Reporting, non-gating.
 #   • bun audit  — Electron dependency advisories. Reporting, non-gating.
 #
-# Only the secret scan fails the run. Dependency advisories and bandit findings
-# are surfaced as signal (Security tab / job log) rather than blocking every PR
-# on a transitive upstream advisory — consistent with the "no ceremony,
-# continuous-to-main" cadence.
+# Only the secret scan and broken scan tooling fail the run. Dependency
+# advisories and Bandit findings are reported without blocking every PR.
+# Private repositories without GitHub Code Security cannot upload CodeQL or
+# SARIF results; the private workflow still preserves Bandit findings.
 name: Security
 
 on:
@@ -65,6 +65,9 @@ jobs:
   # ── CodeQL SAST (Python + JS/TS) ─────────────────────────────────────────
   codeql:
     name: CodeQL (${{ matrix.language }})
+    # GitHub's code-scanning API is unavailable on this private repository.
+    # Do not run CodeQL CLI without an applicable private-repository license.
+    if: ${{ !github.event.repository.private }}
     runs-on: ubuntu-22.04
     permissions:
       contents: read
@@ -87,8 +90,8 @@ jobs:
           # Scope analysis to shipped product code. The excluded trees never
           # ship in the installer's runtime path and produce the bulk of the
           # note-level + false-positive findings (file-not-closed in eval
-          # harnesses, unused alembic migration globals, bind-all in tests,
-          # path sinks in the legacy Gradio research UI). Queries live in the
+          # harnesses, bind-all in tests, path sinks in the legacy Gradio
+          # research UI). Active backend migrations remain in scope. Queries live in the
           # inline config so there's a single source of truth next to
           # paths-ignore. paths-ignore is supported here because build-mode is
           # `none` (interpreted analysis).
@@ -99,7 +102,6 @@ jobs:
               - omnivoice/eval
               - research
               - tests
-              - backend/migrations
               - "**/*.test.js"
               - "**/*.test.jsx"
               - "**/*.test.ts"
@@ -110,7 +112,7 @@ jobs:
         with:
           category: "/language:${{ matrix.language }}"
 
-  # ── Python SAST (bandit → SARIF) ─────────────────────────────────────────
+  # ── Python SAST (Bandit JSON artifact on every run) ──────────────────────
   bandit:
     name: Python SAST (bandit)
     runs-on: ubuntu-22.04
@@ -127,25 +129,50 @@ jobs:
         with:
           python-version: "3.11"
 
-      # -ll: report MEDIUM+ severity only. -ii: MEDIUM+ confidence only.
-      # Keeps the SARIF focused on findings worth a human look. The scan step
-      # is allowed to "fail" (findings present) without failing the job; the
-      # SARIF upload still runs so results reach the Security tab.
-      #
-      # NOTE: the `sarif` output format lives in the `bandit[sarif]` extra
-      # (pulls in sarif-om + jschema-to-python). Plain `bandit` rejects
-      # `-f sarif`, so install via the extra spec.
+      # -ll: MEDIUM+ severity. -ii: MEDIUM+ confidence. Bandit exits 1 when it
+      # finds issues; keep findings non-gating, but fail for missing/malformed
+      # output or a broken scanner. JSON remains available on private repos.
       - name: Run bandit
+        run: |
+          set +e
+          pipx run --spec 'bandit==1.9.4' bandit -r backend/ -ll -ii -f json -o bandit.json
+          scan_status=$?
+          set -e
+          test -s bandit.json
+          if [ "$scan_status" -gt 1 ]; then exit "$scan_status"; fi
+          python3 - <<'PY'
+          import json
+          import os
+
+          with open('bandit.json', encoding='utf-8') as report:
+              findings = json.load(report)['results']
+          counts = {level: sum(item['issue_severity'] == level for item in findings)
+                    for level in ('HIGH', 'MEDIUM')}
+          line = f"Bandit: {len(findings)} findings ({counts['HIGH']} high, {counts['MEDIUM']} medium)"
+          print(line)
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as summary:
+              summary.write('### Python static analysis\n\n' + line + '\n\n')
+              summary.write('Download the `bandit-report` artifact for file and line details.\n')
+          PY
+
+      - name: Preserve Bandit report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: bandit-report
+          path: bandit.json
+          if-no-files-found: warn
+
+      # Preserve Security-tab reporting if the project is public again.
+      - name: Generate Bandit SARIF (public repositories only)
+        if: ${{ !github.event.repository.private }}
         continue-on-error: true
         run: |
-          pipx run --spec 'bandit[sarif]' bandit -r backend/ -ll -ii -f sarif -o bandit.sarif
+          pipx run --spec 'bandit[sarif]==1.9.4' bandit -r backend/ -ll -ii -f sarif -o bandit.sarif
 
-      # continue-on-error: this job is reporting-only. If bandit can't write a
-      # SARIF for any reason (no findings dir, pipx hiccup), don't fail the job.
-      - name: Upload bandit SARIF
+      - name: Upload Bandit SARIF (public repositories only)
+        if: ${{ !github.event.repository.private && hashFiles('bandit.sarif') != '' }}
         uses: github/codeql-action/upload-sarif@1190a975f95ce23525efb6a3fc21ea29567c1b52 # v3.38.2
-        if: always()
-        continue-on-error: true
         with:
           sarif_file: bandit.sarif
           category: bandit

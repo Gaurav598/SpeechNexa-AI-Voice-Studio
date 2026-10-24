@@ -1,14 +1,13 @@
 # Translation engines (Dub tab)
 
-VoiceStudio dubs in two steps: **transcribe → translate → speak**. The *translate*
+SpeechNexa dubs in two steps: **transcribe → translate → speak**. The *translate*
 step is pluggable — pick the engine in the Dub tab's **Engine** dropdown. Two
-engines are **built in** and always available offline; the rest need a small
-optional Python package.
+engines are available only after their packages and model data are installed.
 
 | Engine | Category | Needs a package? | Key needed? |
 |--------|----------|------------------|-------------|
-| **Argos** (Local, Fast) | offline | `argostranslate` (bundled) | no |
-| **NLLB-200** (Local, Heavy) | offline | none (uses core `transformers`) | no |
+| **Argos** (Local, Fast) | offline | explicit `argostranslate` install | no |
+| **NLLB-200** (Local, Heavy) | offline | core `transformers`, plus explicit model weights | no |
 | Google Translate (Free) | online | `deep_translator` | no |
 | DeepL | online | `deep_translator` | yes (`DEEPL_API_KEY`) |
 | Microsoft Translator | online | `deep_translator` | yes (`MICROSOFT_API_KEY`) |
@@ -55,17 +54,17 @@ different external translation per language tab without disturbing the others.
 
 ## Installing optional translation engines (from-source vs packaged build)
 
-How you add an engine depends on **how you installed VoiceStudio**.
+How you add an engine depends on **how you installed SpeechNexa**.
 
 ### From-source / dev install (one-click)
 
-If you cloned the repo and run VoiceStudio from source (`uv sync` + the dev
+If you cloned the repo and run SpeechNexa from source (`uv sync` + the dev
 launcher) or via Docker, the app can install engines for you:
 
 1. In the Dub tab, open the translation settings and pick the engine you want
    (e.g. **Google Translate**) from the **Engine** dropdown.
 2. A highlighted **Install** button appears next to the *Engine* label. Click it.
-3. VoiceStudio runs the install into the **same** Python environment the backend
+3. SpeechNexa runs the install into the **same** Python environment the backend
    is using (`uv pip install <package> --python <backend-interpreter>`), then
    re-probes. When it reports *"restart the backend to load it"*, restart so the
    freshly-installed module is importable.
@@ -74,9 +73,13 @@ You can also install by hand into the backend venv:
 
 ```
 uv pip install deep_translator   # Google / DeepL / Microsoft / MyMemory
-uv pip install argostranslate    # Argos (already bundled; rarely needed)
+uv pip install argostranslate    # Argos: explicit install, then install language packs
 uv pip install openai            # LLM (OpenAI-compatible) provider
 ```
+
+Current Argos releases pin Stanza 1.10.1, which has an unresolved unsafe model
+loading advisory. Install Argos and its language packs only from sources you
+trust. SpeechNexa does not include that package in its default environment.
 
 Then restart the backend.
 
@@ -90,15 +93,15 @@ that opens a small popover with everything you need:
 
 - **The exact command** to run (with a copy-to-clipboard button) if you *do*
   have a from-source checkout somewhere and want the online engines there.
-- **Switch to Argos (bundled, offline)** — one click. Argos and NLLB are always
-  importable in every build, so this is the guaranteed escape hatch: you can
-  keep dubbing immediately, fully offline, no install required.
+- **Use an installed local engine.** Argos requires an explicit package and
+  language-pack installation; NLLB requires explicit model weights. A packaged
+  build cannot add Python packages in place.
 - A link back to this page.
 
-**Recommendation for packaged builds:** just use **Argos** (fast, offline) or
-**NLLB-200** (heavier, higher quality, offline). They need nothing installed and
-never leave your machine. Reach for the online engines only from a from-source
-install where you can add their package.
+**Recommendation for packaged builds:** use **NLLB-200** after installing its
+weights. Argos is available in source installs after its package and language
+packs are explicitly installed. Neither engine sends translation text to a
+remote provider during inference.
 
 ## Translation quality: Fast, Autofit, Cinematic
 
@@ -142,7 +145,7 @@ MT engines can't run either stage):
 ### Fit prediction (all quality levels)
 
 Every translation additionally gets a **pre-synthesis fit check** — no LLM
-needed. For each segment, VoiceStudio predicts how long the translated line will
+needed. For each segment, SpeechNexa predicts how long the translated line will
 take to speak (self-calibrating to your voice/engine from segments already
 generated in the job, with a per-language rate table as the cold-start
 fallback) and compares it against the slot plus the silence it can borrow
@@ -209,7 +212,7 @@ LLM_DEFAULT_PROVIDER=groq        # or openai, openrouter, orcarouter, cheaperinf
 
 Resolution order for the active provider is: `LLM_DEFAULT_PROVIDER` (env) →
 your saved selection → the first provider that has a key → none. The id must be
-one VoiceStudio knows (the ids shown in **Settings → LLM Providers**); an unknown
+one SpeechNexa knows (the ids shown in **Settings → LLM Providers**); an unknown
 value is ignored and resolution falls through to your saved selection. While
 this env var is set it wins over the in-app picker, so if the UI selection
 appears to have "no effect," check whether `LLM_DEFAULT_PROVIDER` is exported.
@@ -241,7 +244,7 @@ launching the backend (or in **Settings → Credentials**):
 After transcription, drag the divider between the video/timeline and transcript
 columns to give either side more room. The divider also works from the keyboard:
 focus it, use Left/Right Arrow in 5% steps, or Home/End for the minimum/maximum.
-VoiceStudio remembers the split on this device. Narrow workspaces stack the two
+SpeechNexa remembers the split on this device. Narrow workspaces stack the two
 panels instead so neither editor becomes unusably small.
 
 ## Troubleshooting
@@ -258,7 +261,7 @@ panels instead so neither editor becomes unusably small.
 - **"The 'argos' engine's CTranslate2 runtime could not be loaded…"** — Argos
   translates on CTranslate2, and on Linux kernels that refuse an executable
   stack the CTranslate2 library shipped with Python 3.11 installs (4.4.0) is
-  rejected outright. VoiceStudio repairs that library in place on first use; if
+  rejected outright. SpeechNexa repairs that library in place on first use; if
   it cannot (read-only install), the message names the fix — reinstall the
   backend on Python 3.12+, or run `patchelf --clear-execstack` on the library
   once — and NLLB stays available in the meantime

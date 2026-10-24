@@ -25,7 +25,9 @@ def test_model_rate_and_original_audio_are_preserved(monkeypatch, rate):
     wave = torch.randn(1, rate + 7)
     result = watermark.embed_watermark(wave, rate, force=True)
     assert torch.equal(result, wave)
-    assert watermark.detect_watermark(result, rate)['is_omnivoice']
+    detection = watermark.detect_watermark(result, rate)
+    assert detection['is_omnivoice']
+    assert detection['source'] == 'OmniVoice-compatible'
     assert [s[0] for s in seen] == ['embed', 'detect']
     assert all(s[1] == 16000 for s in seen)
     assert all(abs(s[2] - (rate + 7) * 16000 / rate) < 1 for s in seen)

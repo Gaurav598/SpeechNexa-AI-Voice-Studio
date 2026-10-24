@@ -106,7 +106,7 @@ def list_loaded() -> dict:
             device = get_best_device()
         models.append({
             "id": "tts",
-            "name": "VoiceStudio TTS",
+            "name": "OmniVoice TTS",
             "checkpoint": mm.resolve_omnivoice_checkpoint(),  # #693: effective checkpoint, not a leaked raw value
             "device": device,
             "vram_mb": round(_tts_vram_mb(), 1),

@@ -911,8 +911,8 @@ async def dub_translate(req: TranslateRequest):
                 f"`deep_translator` Python package, which isn't installed in "
                 f"this backend. Install it with `{cmd}` "
                 f"and restart the server, or "
-                f"switch the Engine dropdown to Argos (local, bundled), NLLB "
-                f"(local, heavier), or OpenAI (LLM)."
+                f"switch the Engine dropdown to an installed local provider "
+                f"(Argos or NLLB), or OpenAI (LLM)."
             )
             return JSONResponse(status_code=400, content={"error": friendly})
 

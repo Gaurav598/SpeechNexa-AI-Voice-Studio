@@ -117,10 +117,10 @@ const extraSettings = [
   },
   {
     to: '/settings/support',
-    label: 'donate.title',
+    label: 'contact.channels_label',
     Icon: ExternalLinkIcon,
     Component: SupportSettings,
-    fields: ['donate.title', 'contact.channels_label'],
+    fields: ['contact.channels_label'],
   },
   {
     to: '/settings/network',
@@ -488,7 +488,7 @@ export function SettingsPage() {
         <div className="shrink-0 space-y-1.5 border-t border-sidebar-border/50 bg-background/15 p-3">
           <Link
             to="/settings/support"
-            title={t('donate.title')}
+            title={t('contact.channels_label')}
             aria-current={extra?.to === '/settings/support' ? 'page' : undefined}
             className={cn(
               buttonVariants({ variant: 'ghost' }),
@@ -498,7 +498,7 @@ export function SettingsPage() {
           >
             <HeartHandshakeIcon className="size-4 shrink-0 text-primary transition-transform duration-200 group-hover:scale-110 motion-reduce:transition-none" />
             <span data-slot="settings-nav-label" className="min-w-0 flex-1 truncate text-left">
-              {t('donate.title')}
+              {t('contact.channels_label')}
             </span>
           </Link>
           <Link

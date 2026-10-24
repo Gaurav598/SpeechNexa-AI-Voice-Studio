@@ -495,7 +495,7 @@ def install_sidecar_engine(engine_id: str):
     except sidecar_install.HostUnsupported as exc:
         # The engine has an installer, but not one that can work on this
         # machine. 409, not 404: the route is right, the host is the problem,
-        # and the message (a VoiceStudio-owned sentence) says what to do.
+        # and the message (a SpeechNexa-owned sentence) says what to do.
         raise HTTPException(status_code=409, detail=str(exc))
     except KeyError:
         raise HTTPException(
@@ -719,7 +719,7 @@ def engine_health(engine_id: str):
 
 # Deliberately short + ASCII so the synth stays CPU-cheap and the phrase never
 # trips the no-hardcoded-CJK guard.
-_SELFTEST_PHRASE = "VoiceStudio engine self test."
+_SELFTEST_PHRASE = "SpeechNexa engine self test."
 _SELFTEST_LOCK = threading.Lock()
 
 

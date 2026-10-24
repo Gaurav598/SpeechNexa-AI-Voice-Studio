@@ -17,14 +17,14 @@ export interface TokenResponse {
 
 export class InvalidGrantError extends Error {
   constructor() {
-    super('The VoiceStudio Cloud session ended');
+    super('The cloud account session ended');
     this.name = 'InvalidGrantError';
   }
 }
 
 export class TransientAuthError extends Error {
   constructor(status?: number) {
-    super(`VoiceStudio Cloud sign-in is unavailable${status ? ` (${status})` : ''}`);
+    super(`Cloud account sign-in is unavailable${status ? ` (${status})` : ''}`);
     this.name = 'TransientAuthError';
   }
 }

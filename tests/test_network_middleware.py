@@ -1,4 +1,7 @@
 # tests/test_network_middleware.py
+from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
+
 from fastapi.testclient import TestClient
 from services import network_share as ns
 
@@ -48,6 +51,74 @@ def test_non_ascii_invalid_pin_fails_closed_instead_of_raising():
 
     assert response.status_code == 401
     assert response.json() == {"detail": "PIN required"}
+
+
+def test_repeated_wrong_pin_is_rate_limited_without_blocking_another_client():
+    from fastapi import FastAPI
+    from main import NetworkAccessMiddleware
+
+    app = FastAPI()
+    app.add_middleware(NetworkAccessMiddleware)
+    app.state.network_share = ns.ShareState(
+        enabled=True, share_port=3901, pin="654321", lan_addresses=["10.0.0.9"]
+    )
+
+    @app.get("/api/ping")
+    def ping():
+        return {"ok": True}
+
+    attacker = TestClient(app, client=("10.0.0.5", 1))
+    neighbor = TestClient(app, client=("10.0.0.6", 1))
+    for _ in range(10):
+        assert attacker.get("/api/ping", params={"pin": "111111"}).status_code == 401
+    limited = attacker.get("/api/ping", params={"pin": "111111"})
+    assert limited.status_code == 429
+    assert int(limited.headers["retry-after"]) > 0
+    assert neighbor.get("/api/ping", params={"pin": "111111"}).status_code == 401
+    assert attacker.get("/api/ping", params={"pin": "654321"}).status_code == 200
+    assert attacker.get("/api/ping", params={"pin": "111111"}).status_code == 401
+
+
+def test_pin_attempt_limit_is_atomic_and_expires_after_one_minute(monkeypatch):
+    import main
+
+    now = [100.0]
+    monkeypatch.setattr(main, "time", SimpleNamespace(monotonic=lambda: now[0]))
+    limiter = main._PinAttemptLimiter()
+    with ThreadPoolExecutor(max_workers=16) as pool:
+        outcomes = list(pool.map(limiter.register_failure, ["10.0.0.5"] * 32))
+    assert outcomes.count(None) == 10
+    assert len([delay for delay in outcomes if delay is not None]) == 22
+    assert limiter.register_failure("10.0.0.5") == 61
+    now[0] = 160.0
+    assert limiter.register_failure("10.0.0.5") is None
+
+
+def test_pin_rotation_does_not_open_new_guess_window():
+    from fastapi import FastAPI
+    from main import NetworkAccessMiddleware
+
+    app = FastAPI()
+    app.add_middleware(NetworkAccessMiddleware)
+    app.state.network_share = ns.ShareState(
+        enabled=True, share_port=3901, pin="654321", lan_addresses=["10.0.0.9"]
+    )
+
+    @app.get("/api/ping")
+    def ping():
+        return {"ok": True}
+
+    client = TestClient(app, client=("10.0.0.5", 1))
+    for _ in range(10):
+        assert client.get("/api/ping", params={"pin": "111111"}).status_code == 401
+    app.state.network_share = ns.ShareState(
+        enabled=True, share_port=3901, pin="123456", lan_addresses=["10.0.0.9"]
+    )
+    limited = client.get("/api/ping", params={"pin": "111111"})
+    assert limited.status_code == 429
+    assert "123456" not in limited.text
+    assert client.get("/api/ping", params={"pin": "123456"}).status_code == 200
+    assert client.get("/api/ping", params={"pin": "111111"}).status_code == 401
 
 
 def test_spa_shell_served_without_pin():

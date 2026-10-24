@@ -179,7 +179,7 @@ export function DictationSetup({ onReady }: { onReady: () => void }) {
         >
           {t('nav.settings')}
         </Link>
-        <AgentFixButton request="Restore local dictation readiness. Diagnose the unavailable model catalogue or runtime, then install and activate the best supported dictation model through VoiceStudio's supported setup interfaces." />
+        <AgentFixButton request="Restore local dictation readiness. Diagnose the unavailable model catalogue or runtime, then install and activate the best supported dictation model through SpeechNexa's supported setup interfaces." />
       </div>
     );
   }

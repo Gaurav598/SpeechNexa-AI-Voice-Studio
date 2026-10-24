@@ -1,4 +1,4 @@
-# VoiceStudio — Electron desktop app
+# SpeechNexa — Electron desktop app
 
 Electron is the only maintained desktop app for voice cloning, stories, dubbing,
 transcription, voice design, and workflows. Tauri is archived at v0.5.3. For
@@ -139,7 +139,7 @@ Layout references: T3 Code's `AppSidebarLayout`, `PreviewPanelShell`,
 The sidebar extends through the native title-bar row. Pane headers provide window
 drag regions and reserve space for native caption controls; engine status and
 theme switching live at the foot of the sidebar. The Electron shell reuses the
-canonical VoiceStudio artwork and platform icons retained with the archived shell;
+inherited artwork and platform icons retained with the archived shell;
 its packaged uv tool is staged under `electron/build/uv`.
 
 Typography uses locally bundled Inter Variable with system UI fallbacks with shared roles: 14px/20px interface text,
@@ -160,12 +160,8 @@ playback persist locally. Settings remain accessible without a ready backend.
 The sidebar footer places engine status and model above a separate Settings and
 Theme control row, with a labeled Settings link on the left and Theme on the right.
 
-The workspace footer shows Integrations, Become a Sponsor, and a right-aligned X.
-They open the integration directory, partner inquiry form, and dedicated
-VoiceStudio Pro page respectively. The sponsor hover/focus card shows dated
-GitHub reach data. The Pro page compares Free and Pro, opens website pricing,
-and leaves licence activation to the separate Pro distribution. Checkout remains
-gated until the paid tools and terms are ready.
+The workspace footer shows the integration directory and current project support links.
+The inherited Pro route redirects to Settings → Support; SpeechNexa has no active paid checkout.
 
 The composer groups language and generation options beside a single primary action.
 Its shortcut appears inline when the composer has space, and controls wrap in narrow panes.
@@ -176,8 +172,8 @@ Appearance and General have direct routes and share a breadcrumb header, searcha
 sidebar, max-w-4xl scroll frame, grouped sections, and consistent setting rows.
 Sidebar active/hover surfaces use the shared T3 theme tokens.
 
-The local palette library includes VoiceStudio Original, Canopy, Current, Hearth, and Orchid, with
-upstream light/dark color definitions with VoiceStudio display names from T3 Code (MIT). Each appearance keeps
+The local palette library includes SpeechNexa Original, Canopy, Current, Hearth, and Orchid, with
+inherited light/dark color definitions and palette work adapted from T3 Code (MIT). Each appearance keeps
 its own selected palette. System mode follows live OS appearance changes; the
 sidebar toggle explicitly switches to light or dark. Choices persist under
 `voicestudio.theme.v2`, migrating the older light/dark setting. Studio restores

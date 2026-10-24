@@ -325,7 +325,7 @@ def _mark_orphans(conn) -> None:
         if cid not in live:
             conn.execute(
                 "UPDATE call_sessions SET status='failed', outcome=COALESCE(outcome,'failed'), "
-                "error=CASE WHEN error='' THEN 'VoiceStudio stopped during the call' ELSE error END, "
+                "error=CASE WHEN error='' THEN 'SpeechNexa stopped during the call' ELSE error END, "
                 "ended_at=COALESCE(ended_at, created_at) WHERE id=?",
                 (cid,),
             )

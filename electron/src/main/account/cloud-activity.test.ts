@@ -9,6 +9,9 @@ it('refuses every request while switched off, without touching the network', asy
   await expect(activity.fetch('https://voicestudio.sh/x')).rejects.toBeInstanceOf(
     CloudDisabledError,
   );
+  await expect(activity.fetch('https://voicestudio.sh/x')).rejects.toThrow(
+    'Cloud account access is switched off',
+  );
   expect(fetchImpl).not.toHaveBeenCalled();
 });
 

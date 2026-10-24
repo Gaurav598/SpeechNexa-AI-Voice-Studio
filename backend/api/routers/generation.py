@@ -612,7 +612,7 @@ def _apply_effect_chain(audio_out, sample_rate, effect_preset, *, skip_mastering
     ``skip_mastering`` honors a backend's ``applies_own_mastering`` flag
     (issue #312): studio engines (e.g. VoxCPM2's native 48 kHz output)
     opt out of the broadcast highpass + Compressor pre-stage that's tuned
-    for VoiceStudio's 24 kHz clone output. Loudness normalization still runs —
+    for OmniVoice's 24 kHz clone output. Loudness normalization still runs —
     it's a benign peak scale. Mirrors ``_run_tts`` in openai_compat.py.
     """
     from services.audio_dsp import (
@@ -924,7 +924,7 @@ def _oom_friendly_reraise(e):
                 "Settings → Audio tools and use "
                 "Download/Repair for the media engine, then retry. If Audio "
                 "tools is already ready, repair the selected TTS engine and "
-                f"restart VoiceStudio. Underlying error: {_safe_exc_text(_exc)}"
+                f"restart SpeechNexa. Underlying error: {_safe_exc_text(_exc)}"
             ) from e
     if isinstance(e, PermissionError) or "Permission denied" in es or "Errno 13" in es:
         raise RuntimeError(
@@ -975,14 +975,13 @@ def _oom_friendly_reraise(e):
     if ("[winerror 4551]" in _low or "[winerror 1260]" in _low
             or "application control policy" in _low):
         raise RuntimeError(
-            f"Windows blocked a file VoiceStudio needs from running — an "
-            f"Application Control policy (Smart App Control, WDAC, or "
-            f"AppLocker) refused to load it. On a personal PC: Windows "
-            f"Security → App & browser control → Smart App Control → Off "
-            f"(note Windows only lets you turn it off once — re-enabling "
-            f"needs a Windows reset), then restart VoiceStudio. On a managed/"
-            f"work PC ask IT to allow the VoiceStudio install folder. The Flush "
-            f"button won't help. Underlying error: {e}"
+            "Windows blocked a component SpeechNexa needs from running. "
+            "An Application Control policy (Smart App Control, WDAC, or "
+            "AppLocker) refused to load it. Check Windows Security for the "
+            "blocked file, verify its source, then repair or reinstall that "
+            "component from a trusted source. On a managed computer, ask IT "
+            "to review the policy and file. Keep application control enabled. "
+            "The Flush button won't help."
         ) from e
     # #1221: libsndfile/soundfile could not read or write an audio file. Its
     # errors are bare ("LibsndfileError: System error.") so they used to fall
@@ -996,7 +995,7 @@ def _oom_friendly_reraise(e):
             f"the OS level). This is a file/disk problem, not a memory one: "
             f"check the drive isn't full, the output and temp folders exist "
             f"and are writable, and that antivirus or OneDrive isn't locking "
-            f"them (add a VoiceStudio exclusion if you use one). If it happens "
+            f"them (add a SpeechNexa exclusion if you use one). If it happens "
             f"only with one reference clip, re-import that clip. Underlying "
             f"error: {e}"
         ) from e
@@ -1057,7 +1056,7 @@ def _oom_friendly_reraise(e):
             f"This TTS engine isn't set up yet — it needs a model path or "
             f"environment variable that isn't configured, so nothing was "
             f"generated. Set it as the underlying error describes (it names the "
-            f"exact variable and what to point it at), then restart VoiceStudio — "
+            f"exact variable and what to point it at), then restart SpeechNexa — "
             f"or pick a ready engine in Model Catalogue. This is a setup "
             f"problem, not a memory one. Underlying error: {e}"
         ) from e
@@ -1127,7 +1126,7 @@ def _oom_friendly_reraise(e):
             f"Try the Flush button to reload the model, then regenerate. Underlying error: {e}"
         ) from e
     raise RuntimeError(
-        f"TTS engine stopped mid-generation with an error VoiceStudio doesn't "
+        f"TTS engine stopped mid-generation with an error SpeechNexa doesn't "
         f"recognize. Retry once; if it keeps failing, please report it with "
         f"the full trace. Underlying error: {_safe_exc_text(e)}"
     ) from e
@@ -1238,7 +1237,7 @@ def _run_inference(
             else:
                 audio_out = _gen(text, duration)[0]
 
-        # Apply DSP effect preset. The VoiceStudio model never masters its own
+        # Apply DSP effect preset. The OmniVoice model never masters its own
         # output, so mastering always runs here (unchanged behavior).
         # Pause renders were trimmed per span above; trimming the whole take
         # would also eat a deliberate leading/trailing [pause].
@@ -1265,7 +1264,7 @@ def _run_backend_inference(
     """Engine-aware twin of :func:`_run_inference` (issue #312).
 
     Runs the request through a pluggable ``TTSBackend`` adapter instead of the
-    VoiceStudio model directly. A crash-isolated OmniVoice proxy advertises
+    OmniVoice model directly. A crash-isolated OmniVoice proxy advertises
     ``supports_native_omnivoice_controls`` and receives the same advanced
     controls and per-call seed as the native path; other adapters keep the
     narrower protocol unchanged.
@@ -1435,7 +1434,7 @@ def _profile_language_rejection_detail(exc: BaseException, language) -> str:
         f"does not override that — Auto fills the language in from the "
         f"profile. Set this voice profile's language to one the engine "
         f"supports, pick a supported language explicitly for this render, or "
-        f"switch engine in Model Catalogue (the VoiceStudio engine has the "
+        f"switch engine in Model Catalogue (the OmniVoice engine has the "
         f"widest coverage). Engine's own message: {exc}"
     )
 
@@ -1491,10 +1490,10 @@ def _language_rejection_or(e: BaseException, backend, language):
     )
     requested = f" '{language}'" if language else ""
     rewritten = ValueError(
-        f"The {engine} engine can't speak{requested}. VoiceStudio offers every "
+        f"The {engine} engine can't speak{requested}. SpeechNexa offers every "
         f"language its default engine supports, but each engine covers a "
         f"different set — pick one this engine supports, or switch engine in "
-        f"Model Catalogue (the VoiceStudio engine has the widest coverage) "
+        f"Model Catalogue (the OmniVoice engine has the widest coverage) "
         f"and generate again. Engine's own message: {e}"
     )
     # Keep the engine's own text reachable. #2156's profile message quotes the
@@ -1825,7 +1824,7 @@ async def generate_speech(
     # The request runs on the engine selected in Settings (POST /engines/select,
     # env var OMNIVOICE_TTS_BACKEND wins), or an explicit per-request `engine`
     # override — same pattern as /ws/tts's `engine` field and /v1/audio/speech's
-    # `model`. Omitting both keeps the historical default (VoiceStudio), so
+    # `model`. Omitting both keeps the historical default (OmniVoice), so
     # existing API consumers see no change.
     from services.tts_backend import (
         OmniVoiceBackend, _mask_hf_tokens, active_backend_id, get_backend_class,
@@ -1904,7 +1903,7 @@ async def generate_speech(
     # native TTS generate (this route, WS TTS, dub, batch, audiobook) is
     # covered.
     if backend_cls is OmniVoiceBackend:
-        # VoiceStudio keeps its native path: it carries the full advanced
+        # OmniVoice keeps its native path: it carries the full advanced
         # parameter surface (t_shift, layer/position/class controls) that
         # the generic adapter protocol doesn't. Byte-identical behavior.
         _model = await get_model()
@@ -2173,7 +2172,7 @@ async def generate_speech(
     # [[…]] one-off overrides to the text, here — AFTER `language` is fully
     # resolved (a profile may fill it above) so per-language entries match the
     # real render language, and BEFORE the text reaches either inference path
-    # (native VoiceStudio or a pluggable backend) and the chunk splitter. This is
+    # (native OmniVoice or a pluggable backend) and the chunk splitter. This is
     # the single point user text → normalized text → model, so the transform
     # covers generate for every engine. Pure text substitution → identical on
     # mac/Win/Linux. A disabled pref or empty dictionary is a pass-through, so
@@ -2722,7 +2721,7 @@ async def generate_speech(
             raise _language_rejection_http_error(
                 e, language, from_profile=True
             ) from e
-        # Most ValueErrors here are VoiceStudio's own validation messages and
+        # Most ValueErrors here are SpeechNexa's own validation messages and
         # are exactly what the user should read. A few are raw library text
         # naming parameters and files the user cannot act on — those get the
         # owned remedy for their class instead (#1879). Unclassified ones keep

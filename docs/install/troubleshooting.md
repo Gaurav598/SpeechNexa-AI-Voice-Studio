@@ -1140,16 +1140,16 @@ isn't installed in this backend."*
 
 **Cause:** the online translation engines (Google / DeepL / Microsoft / MyMemory
 via `deep_translator`, and the LLM provider via `openai`) are **optional** and
-not bundled. Only **Argos** and **NLLB** work out of the box.
+not bundled. Argos also requires explicit installation; NLLB requires model
+weights installed in advance.
 
 **Fix:**
 - **From-source / Docker install:** click the highlighted **Install** button next
   to the *Engine* label in the Dub tab (or run `uv pip install deep_translator`
   in the backend venv) and restart the backend.
-- **Packaged installer build:** in-app install is disabled (read-only signed
-  environment). Click the highlighted button to open the popover and **Switch to
-  Argos (bundled, offline)** — or copy the command to run it in a from-source
-  checkout.
+- **Packaged installer build:** in-app package install is disabled (read-only
+  signed environment). Use NLLB after installing its weights, or copy the
+  optional Argos command for a from-source checkout.
 
 Full guide: [dubbing/translation-engines.md](../dubbing/translation-engines.md#installing-optional-translation-engines-from-source-vs-packaged-build).
 

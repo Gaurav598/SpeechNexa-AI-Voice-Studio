@@ -205,6 +205,8 @@ export function integrationSlug(name) {
 }
 
 export function getIntegrationBySlug(slug) {
+  // Preserve bookmarked upstream routes while new links use SpeechNexa branding.
+  if (slug === 'voicestudio-api') slug = 'speechnexa-api';
   return INTEGRATION_CATALOG.find((entry) => integrationSlug(entry.name) === slug);
 }
 

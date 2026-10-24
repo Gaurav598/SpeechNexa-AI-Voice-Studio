@@ -106,8 +106,8 @@ it('names the folder to open and refuses setup advice outside a checkout (#2988)
   state.checkout = false;
   const plan = await resolveSpawnPlan(3900);
   if (!('error' in plan)) throw new Error('expected a setup error');
-  expect(plan.error).toContain('not a VoiceStudio source checkout');
-  expect(plan.error).toContain('release installer');
+  expect(plan.error).toContain('not a SpeechNexa source checkout');
+  expect(plan.error).toContain('bun run setup:api');
 });
 
 it('keeps native fault frames when the production log ring overflows', async () => {

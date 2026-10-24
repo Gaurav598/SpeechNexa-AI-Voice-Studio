@@ -1,4 +1,4 @@
-"""Discovery contract for VoiceStudio's local speech platform.
+"""Discovery contract for SpeechNexa's local speech platform.
 
 Interfaces should discover this document instead of hard-coding whichever
 dictation route the desktop happens to use.  Endpoint URLs are relative so the
@@ -68,7 +68,7 @@ class SpeechCapabilities(BaseModel):
     )
     protocol: Literal["voicestudio.speech.v1"] = SPEECH_PROTOCOL
     protocol_version: Literal["1.0"] = "1.0"
-    service: str = "VoiceStudio"
+    service: str = "SpeechNexa"
     service_version: str = APP_VERSION
     local_first: bool = True
     endpoints: dict[str, EndpointCapability]

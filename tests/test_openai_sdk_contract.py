@@ -270,7 +270,9 @@ def test_models_list_and_retrieve(client, engine):
     ids = {m.id for m in client.models.list()}
     assert {"tts-1", "tts-1-hd", "gpt-4o-mini-tts", "whisper-1", "gpt-4o-transcribe"} <= ids
     assert engine.id in ids
-    assert client.models.retrieve("gpt-4o-mini-tts").owned_by == "voicestudio"
+    model = client.models.retrieve("gpt-4o-mini-tts")
+    assert model.owned_by == "local"
+    assert model.model_extra["speechnexa"] == model.model_extra["voicestudio"]
     with pytest.raises(openai.NotFoundError):
         client.models.retrieve("definitely-not-a-model")
 

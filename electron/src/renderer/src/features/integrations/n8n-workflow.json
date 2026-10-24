@@ -1,5 +1,5 @@
 {
-  "name": "VoiceStudio",
+  "name": "SpeechNexa",
   "active": false,
   "nodes": [
     {
@@ -12,7 +12,7 @@
     },
     {
       "id": "voicestudio-speech",
-      "name": "VoiceStudio",
+      "name": "SpeechNexa",
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [260, 0],
@@ -21,7 +21,7 @@
         "url": "http://127.0.0.1:3900/v1/audio/speech",
         "sendBody": true,
         "specifyBody": "json",
-        "jsonBody": "{\n  \"model\": \"tts-1\",\n  \"input\": \"VoiceStudio\",\n  \"voice\": \"default\",\n  \"response_format\": \"wav\"\n}",
+        "jsonBody": "{\n  \"model\": \"tts-1\",\n  \"input\": \"SpeechNexa\",\n  \"voice\": \"default\",\n  \"response_format\": \"wav\"\n}",
         "options": {
           "timeout": 1860000,
           "redirect": {
@@ -44,7 +44,7 @@
       "main": [
         [
           {
-            "node": "VoiceStudio",
+            "node": "SpeechNexa",
             "type": "main",
             "index": 0
           }

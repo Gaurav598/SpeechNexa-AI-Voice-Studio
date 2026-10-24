@@ -75,7 +75,7 @@ function colors(light: boolean): ThemeColors {
 }
 export const TAURI_THEME: ThemeDefinition = {
   id: 'heritage',
-  label: 'VoiceStudio Classic',
+  label: 'SpeechNexa Classic',
   appearance: 'dark',
   colors: colors(false),
   variants: { light: colors(true) },

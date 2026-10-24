@@ -25,8 +25,8 @@ it('only lists integrations with completed wiring pages', () => {
     'GitHub Container Registry',
     'Model Context Protocol',
     'OpenAI Agents',
+    'SpeechNexa API',
     'Twilio',
-    'VoiceStudio API',
     'n8n',
   ]);
   expect(container.textContent).not.toContain('Zapier');

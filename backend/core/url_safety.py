@@ -60,7 +60,7 @@ PRIVATE_DESTINATION_DETAIL = (
     "network, or a link-local service), which URL imports don't fetch. Use a "
     "public link or download the file and add it directly. To import from a "
     f"server on your own network, set {ALLOW_PRIVATE_ENV}=1 "
-    f"({DESKTOP_ENV_FILE_HINT}) and restart VoiceStudio. A VPN or proxy app "
+    f"({DESKTOP_ENV_FILE_HINT}) and restart SpeechNexa. A VPN or proxy app "
     "in TUN or fake-IP mode (such as Clash, Surge or sing-box, which answer "
     "with 198.18.x.x addresses) can cause this for public links too: turn on "
     "that mode's real-IP DNS option, or set the same variable."

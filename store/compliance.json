@@ -3,7 +3,7 @@
   "statuses": ["approved", "not-bundled", "blocked", "needs-review"],
   "components": [
     {
-      "id": "voicestudio-application",
+      "id": "speechnexa-application",
       "delivery": "bundled",
       "paths": ["backend", "frontend/dist", "electron/out"],
       "license": "AGPL-3.0-only",

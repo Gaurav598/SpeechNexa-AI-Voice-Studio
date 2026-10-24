@@ -51,18 +51,18 @@ agent = Agent(
 
 pipeline = VoicePipeline(
     workflow=SingleAgentVoiceWorkflow(agent),
-    stt_model="gpt-4o-transcribe",  # served by VoiceStudio's active speech-recognition engine
-    tts_model="gpt-4o-mini-tts",  # served by VoiceStudio's active voice engine
+    stt_model="gpt-4o-transcribe",  # served by SpeechNexa's active speech-recognition engine
+    tts_model="gpt-4o-mini-tts",  # served by SpeechNexa's active voice engine
     config=VoicePipelineConfig(
         model_provider=OpenAIVoiceModelProvider(openai_client=voicestudio),
         stt_settings=STTModelSettings(language="en"),  # omit language to auto-detect
-        tts_settings=TTSModelSettings(voice="alloy"),  # or a VoiceStudio voice-profile id
+        tts_settings=TTSModelSettings(voice="alloy"),  # or a SpeechNexa voice-profile id
     ),
 )
 `;
   return {
     file: 'voicestudio_agents.py',
-    docs: 'https://github.com/debpalash/VoiceStudio/blob/main/docs/agentic-voice.md#openai-agents-sdk',
+    docs: 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/agentic-voice.md#openai-agents-sdk',
     text,
   };
 }

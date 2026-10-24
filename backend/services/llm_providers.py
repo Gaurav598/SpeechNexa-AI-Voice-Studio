@@ -352,7 +352,7 @@ def _probe_lmstudio_loaded_model(base_url: str, api_key: str = "local") -> Optio
         clean_base = base_url.rstrip("/")
         if clean_base.endswith("/v1"):
             clean_base = clean_base[: -len("/v1")]
-        headers = {"User-Agent": "VoiceStudio"}
+        headers = {"User-Agent": "SpeechNexa"}
         if api_key and api_key != "local":
             headers["Authorization"] = f"Bearer {api_key}"
         req = urllib.request.Request(f"{clean_base}/api/v0/models", headers=headers)
@@ -552,11 +552,11 @@ def configuration_error(p: Provider, *, require_model: bool = True) -> Optional[
 
     if p.transport == "cli":
         from services.llm_cli import executable
-        return None if executable(p.sdk_provider) else "Install and sign in to the selected CLI, then restart VoiceStudio."
+        return None if executable(p.sdk_provider) else "Install and sign in to the selected CLI, then restart SpeechNexa."
     if p.transport == "sdk":
         import importlib.util
         if importlib.util.find_spec("litellm") is None:
-            return "Install the LiteLLM SDK in the VoiceStudio backend."
+            return "Install the LiteLLM SDK in the SpeechNexa backend."
         if require_model and not configured_model(p):
             return "Set the Model in Settings > Models > LLM."
         if p.id == "sdk" and require_model and "/" not in configured_model(p):

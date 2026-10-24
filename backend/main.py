@@ -362,6 +362,7 @@ logger = logging.getLogger("omnivoice.api")
 import asyncio
 import time
 import threading
+from collections import OrderedDict, deque
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
 from fastapi.encoders import jsonable_encoder
@@ -1746,6 +1747,32 @@ class StartupGateMiddleware:
         return await resp(scope, receive, send)
 
 
+class _PinAttemptLimiter:
+    """Bound wrong LAN PIN guesses without retaining unbounded client state."""
+
+    def __init__(self):
+        self._failures: OrderedDict[str, deque[float]] = OrderedDict()
+        self._lock = threading.Lock()
+
+    def register_failure(self, client: str) -> int | None:
+        now = time.monotonic()
+        with self._lock:
+            attempts = self._failures.setdefault(client, deque())
+            while attempts and attempts[0] <= now - 60:
+                attempts.popleft()
+            self._failures.move_to_end(client)
+            while len(self._failures) > 1024:
+                self._failures.popitem(last=False)
+            if len(attempts) >= 10:
+                return max(1, int(attempts[0] + 60 - now) + 1)
+            attempts.append(now)
+            return None
+
+    def clear(self, client: str) -> None:
+        with self._lock:
+            self._failures.pop(client, None)
+
+
 class NetworkAccessMiddleware:
     """When a share PIN is set, require it for non-loopback clients on API
     routes. Inert when no PIN (default + docker deploys). Loopback (incl.
@@ -1761,6 +1788,7 @@ class NetworkAccessMiddleware:
 
     def __init__(self, app):
         self.app = app
+        self._pin_attempts = _PinAttemptLimiter()
 
     async def __call__(self, scope, receive, send):
         if scope["type"] != "http":
@@ -1784,8 +1812,16 @@ class NetworkAccessMiddleware:
             or ""
         )
         if not credential_matches(supplied, pin):
-            resp = JSONResponse({"detail": "PIN required"}, status_code=401)
+            retry_after = self._pin_attempts.register_failure(client or "unknown")
+            if retry_after is not None:
+                resp = JSONResponse(
+                    {"detail": "Too many PIN attempts"}, status_code=429,
+                    headers={"Retry-After": str(retry_after)},
+                )
+            else:
+                resp = JSONResponse({"detail": "PIN required"}, status_code=401)
             return await resp(scope, receive, send)
+        self._pin_attempts.clear(client or "unknown")
         # Valid PIN. Set the cookie by wrapping send to inject Set-Cookie on the
         # http.response.start message — without ever materialising the body.
         if request.cookies.get("ov_pin") != pin:

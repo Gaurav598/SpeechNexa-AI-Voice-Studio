@@ -1,16 +1,16 @@
 {
   "schemaVersion": 1,
   "identity": {
-    "productName": "VoiceStudio",
-    "applicationId": "com.voicestudio.desktop",
-    "publisherLegalName": "Yupcha Softwares Private Limited",
+    "productName": "SpeechNexa",
+    "applicationId": "com.speechnexa.desktop",
+    "publisherLegalName": "Gaurav598",
     "license": "AGPL-3.0-only",
     "defaultLocale": "en-US"
   },
   "listing": {
-    "title": "VoiceStudio",
+    "title": "SpeechNexa",
     "shortDescription": "Local voice cloning, voice design, dubbing and dictation on your computer.",
-    "description": "VoiceStudio is a local-first desktop studio for voice cloning, voice design, video dubbing, transcription and real-time dictation. Audio and projects remain on the user's computer by default, with no account or API key required. Models and the managed runtime are installed only through explicit setup or model-install actions.",
+    "description": "SpeechNexa is a local-first desktop studio for voice cloning, voice design, video dubbing, transcription and real-time dictation. Audio and projects remain on the user's computer by default, with no account or API key required. Models and the managed runtime are installed only through explicit setup or model-install actions.",
     "keywords": [
       "voice cloning",
       "text to speech",
@@ -21,10 +21,10 @@
     ]
   },
   "urls": {
-    "website": "https://voicestudio.sh",
-    "privacyPolicy": "https://voicestudio.sh/privacy",
-    "support": "https://github.com/debpalash/VoiceStudio/issues",
-    "source": "https://github.com/debpalash/VoiceStudio"
+    "website": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio",
+    "privacyPolicy": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs/electron-privacy.md",
+    "support": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues",
+    "source": "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
   },
   "requirements": {
     "diskGib": 10,

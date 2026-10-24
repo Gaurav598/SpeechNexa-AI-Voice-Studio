@@ -300,7 +300,7 @@ export function OptionalDetails({
                   />
                 )}
                 <div className="flex flex-wrap items-center gap-2">
-                  <AgentFixButton request="Restore local reference-audio transcription. Install and activate the best compatible ASR model through VoiceStudio, preserve the uploaded reference and manual transcript, then verify automatic transcription is ready to retry." />
+                  <AgentFixButton request="Restore local reference-audio transcription. Install and activate the best compatible ASR model through SpeechNexa, preserve the uploaded reference and manual transcript, then verify automatic transcription is ready to retry." />
                   <Button
                     variant="ghost"
                     size="sm"

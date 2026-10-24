@@ -39,7 +39,6 @@ dependencies = [
     "transformers>=5.10.0",
     "accelerate",
     "pydub",
-    "gradio>=6.15.1",
     "tensorboardX",
     "webdataset",
     "numpy",
@@ -61,7 +60,7 @@ dependencies = [
     "imageio-ffmpeg>=0.6.0",
     # Directly used by video_context; 12.1 adds get_flattened_data(), the
     # replacement for getdata() ahead of its Pillow 14 removal.
-    "pillow>=12.1.0",
+    "pillow>=13.0.0,<14",
     # 0.9.21+ Linux x86_64 wheels are built with -march=native
     # (spotify/pedalboard#454), so importing pedalboard SIGILLs on CPUs
     # that lack the builder's SIMD set. 0.9.20 is the last known-good
@@ -117,16 +116,15 @@ dependencies = [
     "python-multipart>=0.0.31",
     # Required by uvicorn for WebSocket support (real-time sidebar events).
     "websockets",
-    # Offline translation — listed as builtin in the engine registry so the
-    # "Argos (Local, Fast)" option in the Dub tab works out-of-the-box.
-    "argostranslate>=1.9.0",
+    # Argos Translate is an explicit optional install: current releases pin
+    # vulnerable Stanza 1.10.1, so do not ship that loader by default.
     # Phase 1 AUTH-02: Fernet symmetric encryption + scrypt KDF for the
     # at-rest HF token in the SQLite settings store. Pulled in directly so
     # we don't depend on a transitive arrival via pyannote/huggingface_hub
     # (Assumption A1 in RESEARCH.md was checked at execute-time and proved
     # false — `cryptography` is not on the install path today).
     "cryptography>=41",
-    "mcp>=1.28.1,<2",
+    "mcp>=1.30.0,<2",
     # Opt-in product analytics (core/analytics.py). Inert unless the build ships a
     # POSTHOG_PROJECT_TOKEN *and* the user opts in — default OFF. No exception
     # autocapture (it would ship raw tracebacks past core.failure.sanitize()).
@@ -146,7 +144,7 @@ dependencies = [
     # deps → identical behaviour on macOS/Windows/Linux (default-parity rule).
     # EPUB + plaintext stay stdlib-only; only PDF needs a real parser, and
     # pypdf is the lightest one that ships no C extensions.
-    "pypdf>=6.19.0",
+    "pypdf>=6.21.1,<7",
     # LLM client for Cinematic dub refinement, glossary auto-extract, and
     # LLM-based translation (services.llm_backend / translator / dub_translate
     # all `from openai import OpenAI`). Talks to any OpenAI-compatible endpoint —
@@ -217,11 +215,6 @@ eval = [
     "zhon",                # Chinese punctuation
     "unidecode",            # Unicode normalization
 ]
-ui = [
-    "gradio>=6.15.1",
-    "gradio_client",
-    "requests",
-]
 # Phase 3 Plan 03-01 — Supertonic-3 opt-in engine. CPU-only ONNX TTS,
 # 31 languages, ~99M params, ~400 MB model on first use. Default
 # `uv sync --no-dev` does NOT install this; users opt in with
@@ -252,14 +245,13 @@ pockettts = [
 [project.scripts]
 omnivoice-infer = "omnivoice.cli.infer:main"
 omnivoice-infer-batch = "omnivoice.cli.infer_batch:main"
-omnivoice-demo = "omnivoice.cli.demo:main"
 omnivoice-dub = "omnivoice.cli.dub:main"
 
 [project.urls]
 Homepage = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
 Repository = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio"
 Documentation = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/tree/main/docs"
-"Bug Tracker" = "https://github.com/debpalash/VoiceStudio/issues"
+"Bug Tracker" = "https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/issues"
 "Upstream TTS Model" = "https://github.com/k2-fsa/OmniVoice"
 
 [tool.uv.sources]
@@ -308,14 +300,20 @@ constraint-dependencies = [
     "mako>=1.4.2",
     "msgpack>=1.2.1",
     "multidict>=6.9.1",
-    "pillow>=12.3.0",
+    "brotli>=1.2.1",
+    "certifi>=2026.10.19",
+    "pillow>=13.0.0,<14",
     "protobuf>=5.29.6",
     "pydantic-settings>=2.14.2",
     "pygments>=2.20.0",
     "starlette>=1.3.1",
-    "torch==2.8.0",
-    "torchaudio==2.8.0",
-    "torchvision==0.23.0",
+    # Keep the native trio matched. 2.10 fixes the reported weights-only
+    # checkpoint-loader flaw in 2.8 while retaining the existing CUDA 12.8
+    # and CPU wheel channels. TorchAudio 2.10's media backend is covered by
+    # the soundfile fallback in services.audio_io.
+    "torch==2.10.0",
+    "torchaudio==2.10.0",
+    "torchvision==0.25.0",
 ]
 
 [tool.hatch.metadata]

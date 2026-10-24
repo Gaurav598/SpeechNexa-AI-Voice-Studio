@@ -1527,7 +1527,7 @@ class OmniVoiceBackend(TTSBackend):
     """
 
     id = "omnivoice"
-    display_name = "VoiceStudio (k2-fsa/OmniVoice, 600+ languages)"
+    display_name = "OmniVoice (k2-fsa, 600+ languages)"
     instruct_vocabulary = "tags"
     supports_voice_design = True
     gpu_compat = ("cuda", "rocm", "mps", "cpu")
@@ -2494,7 +2494,7 @@ def _ensure_melotts_text_frontend() -> None:
         raise RuntimeError(
             "MeloTTS English needs the optional 'g2p_en' text package. "
             "Pick another MLX-Audio model or install it explicitly into "
-            "VoiceStudio's Python environment (uv pip install g2p_en)."
+            "SpeechNexa's Python environment (uv pip install g2p_en)."
         )
     import nltk
     from core.config import DATA_DIR
@@ -2508,7 +2508,7 @@ def _ensure_melotts_text_frontend() -> None:
         except LookupError as exc:
             raise RuntimeError(
                 f"MeloTTS needs the local NLTK '{package}' data. "
-                "Install its resources explicitly in VoiceStudio's Python "
+                "Install its resources explicitly in SpeechNexa's Python "
                 "environment: python -m nltk.downloader "
                 "averaged_perceptron_tagger averaged_perceptron_tagger_eng cmudict. "
                 "Generation does not download these resources."
@@ -3205,7 +3205,7 @@ class SherpaOnnxBackend(TTSBackend):
       • Android / iOS
       • WebAssembly (browser)
 
-    This is the bridge to browser-based VoiceStudio: the same engine runs natively
+    This is the bridge to browser-based SpeechNexa: the same engine runs natively
     on desktop and compiles to WASM for the web UI.
 
     Install: pip install sherpa-onnx
@@ -3250,7 +3250,7 @@ class SherpaOnnxBackend(TTSBackend):
             return False, (
                 "OMNIVOICE_SHERPA_MODEL not set. Point it to a sherpa-onnx TTS "
                 "model directory (containing model.onnx + tokens.txt), then "
-                "restart VoiceStudio. Download models from "
+                "restart SpeechNexa. Download models from "
                 "https://github.com/k2-fsa/sherpa-onnx/releases"
             )
         if not os.path.isfile(os.path.join(model_dir, "model.onnx")):
@@ -3533,7 +3533,7 @@ _ENGINE_DOCS: dict[str, str] = {
 def _engine_docs_url(bid: str) -> str | None:
     """Public URL of this engine's doc page, or None when it has none.
 
-    VoiceStudio-owned constant either way: the path comes from the registry
+    application-authored constant either way: the path comes from the registry
     above and the base from :mod:`core.links`, so no part of it is derived
     from an engine probe. That is what lets it cross the public boundary
     intact (see api.public_engine_metadata).

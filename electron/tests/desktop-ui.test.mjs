@@ -219,7 +219,7 @@ test('settings: theme and language survive restart, user data stays in the profi
     });
     const dark = page.getByRole('group', { name: 'Dark', exact: true });
     // Studio is the default palette, so pick the other one to make the change observable.
-    const original = dark.getByRole('button', { name: 'VoiceStudio Original', exact: true });
+    const original = dark.getByRole('button', { name: 'SpeechNexa Original', exact: true });
     await original.click();
     await original.and(page.locator('[aria-pressed="true"]')).waitFor();
 

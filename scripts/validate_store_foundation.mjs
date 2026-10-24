@@ -32,6 +32,7 @@ assert.equal(metadata.identity.productName, PRODUCT_NAME);
 assert.equal(metadata.identity.applicationId, APP_ID);
 assert.equal(metadata.identity.license, "AGPL-3.0-only");
 assert(metadata.identity.publisherLegalName);
+assert.equal(metadata.listing.title, PRODUCT_NAME);
 assert(metadata.listing.shortDescription.length <= 100);
 assert(metadata.listing.description.length >= 100);
 for (const [name, value] of Object.entries(metadata.urls)) {

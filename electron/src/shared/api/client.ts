@@ -478,7 +478,7 @@ export async function apiFetch(path: string, opts: ApiFetchOptions = {}): Promis
           /* no window (tests) — the ApiError below still tells the story */
         }
         throw new ApiError(
-          `The local VoiceStudio backend crashed (${describeCrashExit(crash)}) ${crashAge(crash)} ago ` +
+          `The local SpeechNexa backend crashed (${describeCrashExit(crash)}) ${crashAge(crash)} ago ` +
             'and is being restarted — this request could not reach it. ' +
             'Open the crash notice for the error output, or check Settings → Logs → Backend.',
           { status: 0, detail: failureDetail },
@@ -492,7 +492,7 @@ export async function apiFetch(path: string, opts: ApiFetchOptions = {}): Promis
       // GPU). Name what actually happened and point at the thing that fixes it.
       if (lastStage.stage === 'ready') {
         throw new ApiError(
-          'The local VoiceStudio backend is running but stopped responding. This usually means a ' +
+          'The local SpeechNexa backend is running but stopped responding. This usually means a ' +
             'job (a generation or a transcription) is stuck holding the engine — often a model ' +
             'too heavy for the available memory on this machine. Check Settings → Logs → Backend ' +
             'for the last thing it was doing; a smaller model or a lighter engine, both in Model ' +
@@ -525,7 +525,7 @@ export async function apiFetch(path: string, opts: ApiFetchOptions = {}): Promis
           /* no window (tests) — the ApiError below still carries the diagnosis */
         }
         throw new ApiError(
-          'The local VoiceStudio backend could not start, so this request had nowhere to go. ' +
+          'The local SpeechNexa backend could not start, so this request had nowhere to go. ' +
             `The app reported:\n\n${diagnosis}\n\n` +
             'Open the details for the full output, or use Retry / Clean & Retry in Settings → Logs → Backend.',
           { status: 0, detail: { ...failureDetail, startFailure: diagnosis } },

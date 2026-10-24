@@ -50,7 +50,7 @@ _SECRET_NAME_RE = re.compile(r"(TOKEN|KEY|SECRET)", re.IGNORECASE)
 _HTTP_401 = re.compile(r"(?<![\w.-])401(?![\w-])(?!\.\d)")
 _REDACTED_VALUE = "***REDACTED***"
 
-#: VoiceStudio-owned sentence for a media file with no audio stream. Every
+#: application-authored sentence for a media file with no audio stream. Every
 #: audio-extract site raises :class:`NoAudioTrackError` with it (probed with
 #: ffprobe first, recognized from ffmpeg's stderr as a fallback), so the user
 #: sees this instead of ffmpeg's exit-234 dump, and ``classify`` names the
@@ -143,37 +143,37 @@ _HINTS: dict[str, str] = {
     # chose: mirrors never receive the token, so no token change can help.
     "HF_MIRROR_GATED": "This model is gated, and mirrors never receive your Hugging Face token. Switch to Hugging Face (official) in Settings → Models → Hugging Face mirror, then retry.",
     "POCKETTTS_GATED_WEIGHTS": "PocketTTS weights are gated on HuggingFace. Accept the access agreement at huggingface.co/kyutai/pocket-tts, then set HF_TOKEN in Settings → Hugging Face and retry.",
-    "COMPUTE_TYPE_UNSUPPORTED": "Your GPU doesn't support float16 — VoiceStudio retried on int8. If transcription still fails, set OMNIVOICE/ASR_COMPUTE_TYPE=int8 or use CPU.",
+    "COMPUTE_TYPE_UNSUPPORTED": "Your GPU doesn't support float16 — SpeechNexa retried on int8. If transcription still fails, set OMNIVOICE/ASR_COMPUTE_TYPE=int8 or use CPU.",
     # Literal versions, not `--constraint deploy/torch-constraints.txt`:
     # desktop installs don't ship deploy/ (tauri.conf.json bundles only
     # pyproject/uv.lock/backend/omnivoice), so the file-based command would
     # fail with "file not found" for exactly the users most likely to need it
     # (greptile on #1377). tests/test_failure_classify.py pins these literals
     # to the constraint file so they cannot drift when the pins bump.
-    "TRANSFORMERS_IMPORT": "A transformers component could not load. Missing packages and torch/torchvision version mismatches are possible causes, not a diagnosis. Check the underlying traceback and installed package versions first. If a package mismatch or incomplete install is confirmed, reinstall them together at the pinned versions (`uv pip install --python .venv --reinstall torch==2.8.0 torchaudio==2.8.0 torchvision==0.23.0 transformers` in the project folder), then restart the backend. If only transcription is affected, switching ASR to faster-whisper (Use on its row in Model Catalogue) also works around it.",
-    "WINDOWS_APP_CONTROL_BLOCKED": "Windows refused to load a file VoiceStudio needs — an Application Control policy (Smart App Control, WDAC, or AppLocker) blocked it. On a personal PC: Windows Security → App & browser control → Smart App Control → Off (Windows only lets you turn it off once — re-enabling requires a Windows reset), then restart VoiceStudio. On a managed/work PC, ask IT to allow the VoiceStudio install folder.",
+    "TRANSFORMERS_IMPORT": "A transformers component could not load. Missing packages and torch/torchvision version mismatches are possible causes, not a diagnosis. Check the underlying traceback and installed package versions first. If a package mismatch or incomplete install is confirmed, reinstall them together at the pinned versions (`uv pip install --python .venv --reinstall torch==2.10.0 torchaudio==2.10.0 torchvision==0.25.0 transformers` in the project folder), then restart the backend. If only transcription is affected, switching ASR to faster-whisper (Use on its row in Model Catalogue) also works around it.",
+    "WINDOWS_APP_CONTROL_BLOCKED": "Windows refused to load a file SpeechNexa needs — an Application Control policy (Smart App Control, WDAC, or AppLocker) blocked it. Check Windows Security for the blocked file, verify that it came from a trusted source, and repair or reinstall the affected component. On a managed computer, ask IT to review the policy and file. Keep application control enabled.",
     "WINDOWS_PAGING_FILE_TOO_SMALL": "Windows ran out of virtual memory while mapping the model into memory — its paging file is smaller than the model needs. This is not the same as your RAM being full, and closing other apps usually won't fix it: Windows has to be allowed to back the mapping. Set a bigger paging file — Settings → System → About → Advanced system settings → Performance → Settings → Advanced → Virtual memory → Change: untick \"Automatically manage\", pick your system drive, choose \"Custom size\" and set both Initial and Maximum to at least 32768 MB (more than the model's size), then OK and restart Windows. A smaller/quantized engine (OmniVoice GGUF, Supertonic-3) also avoids the large mapping entirely.",
-    "WINDOWS_UNTRUSTED_MOUNT": "Windows refused to walk a folder on the way to this file because the path crosses a mount point it does not trust (WinError 448). That is a Windows rule about the VOLUME, not about VoiceStudio or the file itself — it turns up on Dev Drives, on mounted VHD/ReFS volumes, and on junctions pointing into another user profile, so retrying the same link cannot help. Point VoiceStudio at a folder on an ordinary local drive instead: Settings → Storage → data directory, or the download/output folder named in the message. If that folder has to stay where it is, trust the volume with `fsutil devdrv trust <drive>:` from an elevated prompt and restart.",
+    "WINDOWS_UNTRUSTED_MOUNT": "Windows refused to walk a folder on the way to this file because the path crosses a mount point it does not trust (WinError 448). That is a Windows rule about the VOLUME, not about SpeechNexa or the file itself — it turns up on Dev Drives, on mounted VHD/ReFS volumes, and on junctions pointing into another user profile, so retrying the same link cannot help. Point SpeechNexa at a folder on an ordinary local drive instead: Settings → Storage → data directory, or the download/output folder named in the message. If that folder has to stay where it is, trust the volume with `fsutil devdrv trust <drive>:` from an elevated prompt and restart.",
     "INPUT_TOO_SHORT": "The input was too short for this engine to process — its first convolution needs more frames than the text (or the reference clip) produced. This is a hard limit of the model, not a transient failure, so retrying the same input will fail the same way. Give it a few more words, or a longer reference clip: a short phrase rather than one or two characters, and about a second of speech rather than a fragment.",
     "CLONE_REFERENCE_MISSING": "This engine was asked to clone a voice but got no reference audio to clone FROM, and the model folder carries no built-in voice either. Pick a voice profile that has a saved reference clip, or record/upload a few seconds of clean speech as the reference, then generate again. A designed voice with no saved reference cannot be cloned from — synthesize with it directly instead.",
-    "MEDIA_TOOL_MISSING": "VoiceStudio's media engine (ffmpeg/ffprobe) wasn't on the system path when a component went looking for it. Open Settings → Audio tools and use Download/Repair to fetch the bundled copy, then retry — a restart picks it up for everything. If you'd rather use a system install, install ffmpeg (macOS: `brew install ffmpeg`; Windows: `winget install Gyan.FFmpeg`; Linux: your package manager) and restart VoiceStudio, or point FFMPEG_PATH / OMNIVOICE_FFPROBE_PATH at the binaries in Settings.",
-    "AUDIO_IO_FAILED": "An audio file couldn't be read or written at the OS level. Check the drive isn't full, that the output and temp folders exist and are writable, and that antivirus or OneDrive isn't locking them (add a VoiceStudio exclusion if you use one).",
-    "VIDEO_DOWNLOAD_OS_ERROR": "The OS refused a file operation while saving the downloaded video — this is a disk/folder problem, not a network one, so retrying the same link won't help. The download is written to a job folder under your VoiceStudio data directory (Settings → Storage shows the path): check that drive isn't full, that the folder exists and is writable, and that antivirus or a cloud-sync client (OneDrive, Dropbox) isn't locking it — add a VoiceStudio exclusion if you use one. If your data directory sits on a synced or network drive, move it to a local one.",
-    "OS_INVALID_ARGUMENT": "The OS rejected a file operation (Errno 22 / invalid argument) — in the transcribe path this is the temporary WAV write before ASR. It's almost always the temp directory: missing, read-only, on a full or removed drive, or blocked by antivirus. Check that your system TEMP/TMP folder exists and is writable and the drive has free space (add a VoiceStudio antivirus exclusion if you use one), then retry.",
-    "SOCKS_PROXY_SUPPORT_MISSING": "A SOCKS proxy is configured in your environment (ALL_PROXY/HTTPS_PROXY=socks5://…) and the backend's HTTP client is missing SOCKS support. Newer VoiceStudio builds ship SOCKS support (the socksio package) — update the app. If you still see this, unset ALL_PROXY/HTTPS_PROXY for VoiceStudio, or run `uv pip install 'httpx[socks]'` in the backend venv, then restart.",
-    "SSL_HANDSHAKE_FAILURE": "A corporate or antivirus proxy is intercepting HTTPS traffic and re-signing certificates with its own CA — your OS trusts that CA, but Python's bundled certifi CA list doesn't, so the TLS handshake fails even though the connection reached the server. Newer VoiceStudio builds trust the OS certificate store at startup (the truststore package), which should already fix this — update the app and retry. If you still see this, add an HTTPS-scanning exclusion for VoiceStudio/Python in your antivirus, or ask IT for the proxy's CA bundle and set SSL_CERT_FILE to it, then restart.",
+    "MEDIA_TOOL_MISSING": "SpeechNexa's media engine (ffmpeg/ffprobe) wasn't on the system path when a component went looking for it. Open Settings → Audio tools and use Download/Repair to fetch the bundled copy, then retry — a restart picks it up for everything. If you'd rather use a system install, install ffmpeg (macOS: `brew install ffmpeg`; Windows: `winget install Gyan.FFmpeg`; Linux: your package manager) and restart SpeechNexa, or point FFMPEG_PATH / OMNIVOICE_FFPROBE_PATH at the binaries in Settings.",
+    "AUDIO_IO_FAILED": "An audio file couldn't be read or written at the OS level. Check the drive isn't full, that the output and temp folders exist and are writable, and that antivirus or OneDrive isn't locking them (add a SpeechNexa exclusion if you use one).",
+    "VIDEO_DOWNLOAD_OS_ERROR": "The OS refused a file operation while saving the downloaded video — this is a disk/folder problem, not a network one, so retrying the same link won't help. The download is written to a job folder under your SpeechNexa data directory (Settings → Storage shows the path): check that drive isn't full, that the folder exists and is writable, and that antivirus or a cloud-sync client (OneDrive, Dropbox) isn't locking it — add a SpeechNexa exclusion if you use one. If your data directory sits on a synced or network drive, move it to a local one.",
+    "OS_INVALID_ARGUMENT": "The OS rejected a file operation (Errno 22 / invalid argument) — in the transcribe path this is the temporary WAV write before ASR. It's almost always the temp directory: missing, read-only, on a full or removed drive, or blocked by antivirus. Check that your system TEMP/TMP folder exists and is writable and the drive has free space (add a SpeechNexa antivirus exclusion if you use one), then retry.",
+    "SOCKS_PROXY_SUPPORT_MISSING": "A SOCKS proxy is configured in your environment (ALL_PROXY/HTTPS_PROXY=socks5://…) and the backend's HTTP client is missing SOCKS support. Newer SpeechNexa builds ship SOCKS support (the socksio package) — update the app. If you still see this, unset ALL_PROXY/HTTPS_PROXY for SpeechNexa, or run `uv pip install 'httpx[socks]'` in the backend venv, then restart.",
+    "SSL_HANDSHAKE_FAILURE": "A corporate or antivirus proxy is intercepting HTTPS traffic and re-signing certificates with its own CA — your OS trusts that CA, but Python's bundled certifi CA list doesn't, so the TLS handshake fails even though the connection reached the server. Newer SpeechNexa builds trust the OS certificate store at startup (the truststore package), which should already fix this — update the app and retry. If you still see this, add an HTTPS-scanning exclusion for SpeechNexa/Python in your antivirus, or ask IT for the proxy's CA bundle and set SSL_CERT_FILE to it, then restart.",
     "UNSUPPORTED_VIDEO_URL": "This link isn't a directly downloadable video. Paste a direct video page (e.g. a youtube.com/watch?v=… or douyin.com/video/<id> link), not a share/profile/feed link — or download the file and drop it in directly.",
     # #2034: yt-dlp's own advice names CLI flags (--cookies-from-browser)
-    # that a VoiceStudio user has no way to pass.
+    # that a SpeechNexa user has no way to pass.
     "VIDEO_DOWNLOAD_BOT_CHECK": "YouTube refused this download until it can confirm a signed-in person is asking (its “Sign in to confirm you’re not a bot” check), so retrying the same link won’t help. Sign in to YouTube in your browser, export its cookies as a Netscape cookies.txt file (a cookies.txt browser extension does this), and attach it in Dub with “Choose a cookies.txt export” before importing the link again. The desktop app accepts cookie exports; a browser connection needs HTTPS. Or download the video yourself and upload the file.",
-    "VIDEO_DRM_PROTECTED": "The video host only offered VoiceStudio a DRM-protected copy, which can't be downloaded. This is often not a property of the video itself — the host serves a different format set to different clients, and VoiceStudio already retried through every client it has. Try the link again in a minute, or download the video with a browser extension / the host's own download button and drop the file into Dubbing directly.",
+    "VIDEO_DRM_PROTECTED": "The video host only offered SpeechNexa a DRM-protected copy, which can't be downloaded. This is often not a property of the video itself — the host serves a different format set to different clients, and SpeechNexa already retried through every client it has. Try the link again in a minute, or download the video with a browser extension / the host's own download button and drop the file into Dubbing directly.",
     # #1301: distinct from SSL_HANDSHAKE_FAILURE. The handshake did not fail on
     # trust — the connection was CUT while TLS was in progress, so the certifi /
     # proxy-CA advice above would send the user to fix something that isn't
     # broken. Raw form is "[SSL: UNEXPECTED_EOF_WHILE_READING] EOF occurred in
     # violation of protocol (_ssl.c:1016)", which means nothing to anyone.
     "TLS_CONNECTION_DROPPED": "The secure connection was cut off mid-transfer — the other end (or something between you and it) closed the socket during the TLS exchange. This is almost always transient: flaky Wi-Fi, a VPN reconnecting, a captive portal, or a download server dropping a long transfer. Retrying is safe: a partly-downloaded MODEL is picked up where it left off rather than started over. If it repeats every time, a VPN or an HTTPS-inspecting proxy is terminating long-lived connections — try without the VPN, or on another network.",
-    "VIDEO_DOWNLOAD_NETWORK": "The connection to the video server dropped mid-download (often a transient CDN/network blip or a regional rate-limit). Just retry — VoiceStudio already cleaned up the partial download. If it keeps failing, check your network/VPN.",
+    "VIDEO_DOWNLOAD_NETWORK": "The connection to the video server dropped mid-download (often a transient CDN/network blip or a regional rate-limit). Just retry — SpeechNexa already cleaned up the partial download. If it keeps failing, check your network/VPN.",
     # #1347: the transformers pipeline fails to import a component it was
     # DOWNLOADING when the shared HTTP client closed underneath it (#880). The
     # message names AutoFeatureExtractor, so TRANSFORMERS_IMPORT matched and
@@ -181,8 +181,8 @@ _HINTS: dict[str, str] = {
     # because nothing is wrong with their install. Checked first so the cause
     # wins over the symptom.
     "MODEL_DOWNLOAD_INTERRUPTED": "A model download was cut off mid-request, and the component it was fetching then failed to load. Nothing is wrong with your install — reinstalling won't help, and the partial download is resumed rather than restarted. Just retry. If it keeps happening, check your connection (and any VPN, proxy or HF mirror setting); if only transcription is affected, switching ASR to faster-whisper in Model Catalogue avoids the pipeline that downloads this component.",
-    "BROKEN_VENV": "The Python backend environment was moved or damaged. VoiceStudio rebuilds it automatically on the next launch; if it keeps failing, use Clean & Retry on the setup screen.",
-    "MODEL_CACHE_CORRUPT": "A model file is missing or damaged — a download that stopped part-way, a broken link to downloaded data, or a file changed on disk after it arrived (interrupted renames and antivirus interference both cause this). VoiceStudio repairs it automatically and retries the load once, re-downloading the damaged file where a resume would not have replaced it. If the error persists, quit VoiceStudio, delete the model's models--<org>--<name> folder inside the Hugging Face cache, and restart — the model re-downloads automatically.",
+    "BROKEN_VENV": "The Python backend environment was moved or damaged. SpeechNexa rebuilds it automatically on the next launch; if it keeps failing, use Clean & Retry on the setup screen.",
+    "MODEL_CACHE_CORRUPT": "A model file is missing or damaged — a download that stopped part-way, a broken link to downloaded data, or a file changed on disk after it arrived (interrupted renames and antivirus interference both cause this). SpeechNexa repairs it automatically and retries the load once, re-downloading the damaged file where a resume would not have replaced it. If the error persists, quit SpeechNexa, delete the model's models--<org>--<name> folder inside the Hugging Face cache, and restart — the model re-downloads automatically.",
     # A video (or a mis-labelled file) with no audio stream at all. ffmpeg
     # answered the extract with exit 234 and "Output file does not contain any
     # stream … Error opening output files: Invalid argument", which the dub
@@ -192,9 +192,9 @@ _HINTS: dict[str, str] = {
     # #2929/#2678: the voice has no transcript and no speech-to-text model is
     # installed to produce one, so the only advice that works is one of those two.
     "REFERENCE_STT_MISSING": "This voice has no transcript, and no speech-to-text model is installed to write one. Type what the reference clip says into the transcript box (clips up to 20 seconds), or install a speech-to-text model in Model Catalogue (Whisper is a good default), select it, then generate again.",
-    # A Python package the engine imports is absent from VoiceStudio's
+    # A Python package the engine imports is absent from SpeechNexa's
     # environment. Not memory, not the GPU, not the network.
-    "ENGINE_DEPENDENCY_MISSING": "A Python package this engine needs is not installed in VoiceStudio's environment, so the engine could not start. Open Model Catalogue, select the engine and use Install / Repair, then restart VoiceStudio. If it still fails, switch to another engine and include the engine name in your report.",
+    "ENGINE_DEPENDENCY_MISSING": "A Python package this engine needs is not installed in SpeechNexa's environment, so the engine could not start. Open Model Catalogue, select the engine and use Install / Repair, then restart SpeechNexa. If it still fails, switch to another engine and include the engine name in your report.",
     # HF_MIRROR_UNREACHABLE has a DYNAMIC hint (it names the configured mirror)
     # — see hf_mirror_hint(); build_failure special-cases it.
 }
@@ -381,7 +381,7 @@ def hf_mirror_hint(reason: Optional[str]) -> str:
         "first-run setup, use the mirror picker right on this screen — or "
         "wait for the mirror to recover, then retry: downloads pick up a "
         "mirror change immediately. If a retry still fails after switching, "
-        "restart VoiceStudio."
+        "restart SpeechNexa."
     )
 
 
@@ -454,18 +454,18 @@ _CONTEXT_FREE_HINT_CLASSES = frozenset({
     # #1879: matched on wording no other failure produces, and it reaches the
     # user as a bare 400 carrying only the library sentence.
     "CLONE_REFERENCE_MISSING",
-    # Its trigger is a VoiceStudio-authored sentence — "the TTS model cache
+    # Its trigger is a application-authored sentence — "the TTS model cache
     # for … is incomplete" plus "could not be auto-repaired" / "weights
     # missing" — so it cannot be produced by an unrelated library. The 500
     # handler is the surface a corrupt cache actually reaches, and dropping
     # its hint there would leave the user with no way to know a redownload
     # is the fix.
     "MODEL_CACHE_CORRUPT",
-    # Triggered by a VoiceStudio-authored sentence or ffmpeg's own no-stream
+    # Triggered by a application-authored sentence or ffmpeg's own no-stream
     # wording; it reaches the user through an upload's error response.
     "NO_AUDIO_TRACK",
     # Each is matched on wording only that failure produces: a Python
-    # ModuleNotFoundError sentence and VoiceStudio's own reference-transcript
+    # ModuleNotFoundError sentence and SpeechNexa's own reference-transcript
     # sentence.
     "ENGINE_DEPENDENCY_MISSING",
     "REFERENCE_STT_MISSING",
@@ -718,7 +718,7 @@ def classify(reason: BaseException | str) -> str:
     # transformers + site-packages markers, which this signature lacks.
     # #1225: the same errno raised by the DUB video download is a different
     # class with a different remedy — the failing directory is the job folder
-    # under the VoiceStudio data dir, not the system temp dir. Checked first so
+    # under the SpeechNexa data dir, not the system temp dir. Checked first so
     # a download's errno 22 stops being handed the transcribe path's
     # "check your TEMP folder" hint, which sends the user to the wrong place.
     if is_os_write_refusal(reason) and any(
@@ -726,10 +726,10 @@ def classify(reason: BaseException | str) -> str:
     ):
         return "VIDEO_DOWNLOAD_OS_ERROR"
     # #1256: a third-party library shelled out to `ffprobe`/`ffmpeg` BY NAME and
-    # the OS had nothing to run. VoiceStudio's own code always resolves the
+    # the OS had nothing to run. SpeechNexa's own code always resolves the
     # bundled sidecar explicitly, so this only ever comes from a dependency —
     # which meant it arrived with no class at all and the user was told the
-    # engine "stopped with an error VoiceStudio doesn't recognize". Checked
+    # engine "stopped with an error SpeechNexa doesn't recognize". Checked
     # before the generic errno-2 rules, which would otherwise claim it.
     if _is_missing_media_tool(low):
         return "MEDIA_TOOL_MISSING"
@@ -749,7 +749,7 @@ def classify(reason: BaseException | str) -> str:
     # zero-byte stand-ins) or which is simply missing its weight shard.
     # model_manager self-heals this (delete broken entries → snapshot_download
     # → retry once); the class here covers the raw transformers wordings (any
-    # load surface can leak them) and VoiceStudio's own repair messages, so the
+    # load surface can leak them) and SpeechNexa's own repair messages, so the
     # user-facing error and the auto bug report name the class and its
     # automatic repair.
     if (
@@ -1093,7 +1093,7 @@ def _env_summary() -> str:
 def diagnostic(*, reason: str, error_class: str, stage: str) -> str:
     """A sanitized, copy-paste-friendly diagnostic block for a failed job."""
     block = (
-        "VoiceStudio diagnostic\n"
+        "SpeechNexa diagnostic\n"
         "--------------------\n"
         f"Stage:   {stage}\n"
         f"Error:   {error_class}\n"

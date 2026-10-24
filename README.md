@@ -1,6 +1,6 @@
 # SpeechNexa
 
-**SpeechNexa — AI Voice Generation & Speech Studio** is a local-first Electron and FastAPI application for speech generation and related audio workflows. It is an [AGPL-3.0-only](LICENSE) derivative of [VoiceStudio](UPSTREAM.md). Speech engines and weights retain their own authors and licenses.
+**SpeechNexa — AI Voice Generation & Speech Studio** is a local-first Electron and FastAPI application for speech generation and related audio workflows. It is an [AGPL-3.0-only](LICENSE) derivative of an [upstream project](UPSTREAM.md). Speech engines and weights retain their own authors and licenses.
 
 > Migration in progress. The locally verified speech path is English text-to-speech with KittenTTS on an Apple M4 Mac. See [implementation status](docs/IMPLEMENTATION_STATUS.md) for exact tests, publication state, and remaining gaps. Other inherited engines and platforms require separate installation and verification.
 

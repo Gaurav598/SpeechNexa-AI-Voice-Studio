@@ -339,7 +339,7 @@ def why_no_gpu(torch, gpus=None) -> tuple[str, ...]:
                 f"{override} is set. Try removing that override first — this "
                 "ROCm supports most current cards natively, and remapping one "
                 "it already supports can leave the runtime with no usable "
-                "device. VoiceStudio sets the override itself when a card "
+                "device. SpeechNexa sets the override itself when a card "
                 "genuinely needs it",
             )
         return (

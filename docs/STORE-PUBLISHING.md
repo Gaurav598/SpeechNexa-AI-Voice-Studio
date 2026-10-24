@@ -4,6 +4,11 @@ The shared publishing foundation keeps identity, disclosures, distribution
 policy, assets and artifact provenance consistent across stores. It does not
 publish or reserve listings.
 
+The canonical listing now uses SpeechNexa's application ID and the owner's
+GitHub repository. `Gaurav598` identifies the current repository owner in
+draft metadata; verify the legal publisher name and replace the draft privacy
+information with an approved policy before any store submission.
+
 The execution sequence and platform-worker acceptance criteria are in
 [`STORE-PUBLISHING-HANDOVER.md`](STORE-PUBLISHING-HANDOVER.md).
 

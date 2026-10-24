@@ -63,7 +63,7 @@ _UNAVAILABLE_PLATFORM = (
 # right, the installation is not. MLX-Audio / MLX-Whisper need MPS (#390).
 _UNAVAILABLE_NO_MPS = (
     "This engine needs Apple's GPU (MPS), and this installation's PyTorch "
-    "can't use it. Updating macOS or reinstalling VoiceStudio usually "
+    "can't use it. Updating macOS or reinstalling SpeechNexa usually "
     "restores it."
 )
 _UNAVAILABLE_NEEDS_CONFIG = (
@@ -139,7 +139,7 @@ def public_backends(entries: list[dict]) -> list[dict]:
     Availability probes may contain exception text, local paths, tracebacks, or
     credentials. Registry-authored fields are not probe output and remain
     intact: ``install_hint``, ``setup_snippet`` and ``docs_url`` are all
-    VoiceStudio-owned constants keyed on the engine id, so an unavailable row
+    application-authored constants keyed on the engine id, so an unavailable row
     still has something actionable to show and somewhere to send the user
     (#1866) even though ``reason``/``last_error`` are replaced here.
     """

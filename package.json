@@ -36,11 +36,28 @@
     "dist:dir": "bun run --cwd electron dist:dir --publish never"
   },
   "workspaces": ["electron"],
+  "overrides": {
+    "@ai-sdk/provider-utils": "^4.0.33",
+    "@vitest/mocker": "^4.1.12",
+    "basic-ftp": "^6.2.3",
+    "body-parser": "^2.4.0",
+    "dompurify": "^3.4.17",
+    "fast-uri": "^3.1.9",
+    "follow-redirects": "^1.16.1",
+    "hono": "^4.13.13",
+    "http-cache-semantics": "^4.3.0",
+    "ip-address": "^10.7.4",
+    "proxy-addr": "^2.0.8",
+    "source-map-js": "^1.2.2",
+    "vite": "^8.3.5",
+    "vitest": "4.1.12",
+    "zod": "^4.6.6"
+  },
   "devDependencies": {
-    "concurrently": "^10.0.5",
-    "playwright": "^1.63.0",
+    "concurrently": "^10.0.6",
+    "playwright": "^1.64.1",
     "taze": "^21.3.0",
-    "turbo": "^2.11.5",
+    "turbo": "^2.11.10",
     "typescript": "^7.0.2",
     "wait-on": "^9.5.1"
   }

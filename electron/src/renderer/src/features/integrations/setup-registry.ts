@@ -68,7 +68,7 @@ export interface IntegrationSetup {
   panel?: ComponentType<IntegrationPanelProps>;
 }
 
-const REPO_DOCS = 'https://github.com/debpalash/VoiceStudio/blob/main/docs';
+const REPO_DOCS = 'https://github.com/Gaurav598/SpeechNexa-AI-Voice-Studio/blob/main/docs';
 const DOCKER_HUB_IMAGE = 'palashdeb/omnivoice-studio';
 const GHCR_IMAGE = 'ghcr.io/debpalash/voicestudio';
 // Published images keep this stable even when a desktop build chooses another local default.
@@ -223,7 +223,7 @@ export const INTEGRATION_SETUPS: Record<string, IntegrationSetup> = {
                 voicestudio: {
                   command: 'python',
                   args: ['-m', 'backend.mcp_shim'],
-                  cwd: '/path/to/VoiceStudio',
+                  cwd: '/path/to/SpeechNexa',
                   // The full base keeps https and any reverse-proxy path prefix.
                   env: {
                     OMNIVOICE_URL: base,
@@ -240,7 +240,7 @@ export const INTEGRATION_SETUPS: Record<string, IntegrationSetup> = {
       ];
     },
   },
-  'voicestudio-api': {
+  'speechnexa-api': {
     capabilities: ['speechApi', 'transcriptionApi'],
     taglineKey: 'integrationCatalog.tagline.api',
     docs: `${REPO_DOCS}/api-auth.md`,
@@ -275,7 +275,7 @@ export const INTEGRATION_SETUPS: Record<string, IntegrationSetup> = {
             `curl ${base}/v1/audio/speech \\`,
             ...auth,
             '  -H "Content-Type: application/json" \\',
-            '  -d \'{"model":"tts-1","voice":"default","input":"Hello from VoiceStudio.","response_format":"wav"}\' \\',
+            '  -d \'{"model":"tts-1","voice":"default","input":"Hello from SpeechNexa.","response_format":"wav"}\' \\',
             '  --output speech.wav',
             '',
           ].join('\n'),
@@ -308,7 +308,7 @@ export const INTEGRATION_SETUPS: Record<string, IntegrationSetup> = {
             ')',
             '',
             'with client.audio.speech.with_streaming_response.create(',
-            '    model="tts-1", voice="default", input="Hello from VoiceStudio.",',
+            '    model="tts-1", voice="default", input="Hello from SpeechNexa.",',
             '    response_format="wav",',
             ') as response:',
             '    response.stream_to_file("speech.wav")',
@@ -377,5 +377,6 @@ export const INTEGRATION_SETUPS: Record<string, IntegrationSetup> = {
 };
 
 export function integrationSetup(slug: string): IntegrationSetup | undefined {
+  if (slug === 'voicestudio-api') slug = 'speechnexa-api';
   return Object.hasOwn(INTEGRATION_SETUPS, slug) ? INTEGRATION_SETUPS[slug] : undefined;
 }

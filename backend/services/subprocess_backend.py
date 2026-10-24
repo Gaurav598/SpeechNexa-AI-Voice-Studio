@@ -671,7 +671,7 @@ class SubprocessBackend(TTSBackend):
             return f"{self.id} sidecar closed pipe mid-generate"
         reason = (
             f"{self.id} sidecar sent nothing for {deadline_s:g}s "
-            f"(elapsed {elapsed_s:.0f}s), so VoiceStudio stopped it. It may "
+            f"(elapsed {elapsed_s:.0f}s), so SpeechNexa stopped it. It may "
             f"simply be slower than that deadline on this host; retry or increase "
             f"this engine's receive timeout (see Troubleshooting)."
         )

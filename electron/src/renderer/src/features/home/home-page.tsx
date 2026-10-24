@@ -1,5 +1,4 @@
 import { HomeFeatureIcon } from './home-feature-icon';
-import { HomeContributors } from './home-contributors';
 import './home-page.css';
 import { WorkspaceHeader } from '@/components/app-shell/workspace-header';
 import { ProfileAvatar } from '@/components/profile-avatar';
@@ -214,7 +213,6 @@ export function HomePage() {
                     {t('homeUi.subtitle')}
                   </p>
                 </div>
-                <HomeContributors />
               </div>
             </div>
             {[destinations.slice(0, 3), destinations.slice(3)].map((group, groupIndex) => (

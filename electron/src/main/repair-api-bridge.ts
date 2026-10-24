@@ -146,7 +146,7 @@ export async function startRepairApiBridge(
         }
         return false;
       } catch {
-        json(500, { detail: 'VoiceStudio could not complete that recovery operation' });
+        json(500, { detail: 'SpeechNexa could not complete that recovery operation' });
         return true;
       }
     };
@@ -188,7 +188,7 @@ export async function startRepairApiBridge(
       if (response.headersSent) response.destroy();
       else {
         response.writeHead(502, { 'content-type': 'application/json' });
-        response.end('{"detail":"VoiceStudio backend unavailable"}');
+        response.end('{"detail":"SpeechNexa backend unavailable"}');
       }
     });
     incoming.on('aborted', () => upstream.destroy());

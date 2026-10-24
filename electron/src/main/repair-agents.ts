@@ -313,7 +313,7 @@ export function launchArgs(
 
 export function openCodePromptArgs(promptFile: string): string[] {
   // OpenCode's --file option is variadic, so the positional message must come first.
-  return ['Follow the attached VoiceStudio repair request.', '--file', promptFile];
+  return ['Follow the attached SpeechNexa repair request.', '--file', promptFile];
 }
 
 function isVoiceStudioCheckout(path: string): boolean {
@@ -473,7 +473,7 @@ export function dubTranslationPrompt(request: DubAgentTranslationRequest): strin
       ? { measuredSeconds: Number(segment.measuredSeconds.toFixed(3)) }
       : {}),
   }));
-  return `You are VoiceStudio's local dubbing translation agent. ${purpose}
+  return `You are SpeechNexa's local dubbing translation agent. ${purpose}
 ${request.dialect ? `Use the ${request.dialect} dialect consistently.` : ''}
 ${request.translationInstructions?.trim() ? `User translation style brief (apply to tone and wording, while retaining meaning, timing and the required output format): ${JSON.stringify(request.translationInstructions.trim())}` : ''}
 ${request.glossary?.length ? `Use this glossary exactly where applicable: ${JSON.stringify(request.glossary)}` : ''}
@@ -678,11 +678,11 @@ export function requestPrompt(
   validateAgentWorkspace(request);
   const task =
     request.report.trim().slice(0, MAX_REPORT) ||
-    'Find the current VoiceStudio failure from the supplied diagnostics and recent logs.';
+    'Find the current SpeechNexa failure from the supplied diagnostics and recent logs.';
   const session = sourceAttached
-    ? `You are the local VoiceStudio repair agent running inside its source checkout.
+    ? `You are the local SpeechNexa repair agent running inside its source checkout.
 Read AGENTS.md first, then CLAUDE.md and CONTEXT.md. Follow repository skills and rules.`
-    : `You are VoiceStudio Agent, a local app operator running in a temporary session. No source checkout is attached. Do not search for or edit application source or other user files. Complete the user's current request through VoiceStudio's app API bridge. For missing essential input such as source text, an audio file or a target language, ask a short question instead of inventing input.`;
+    : `You are SpeechNexa Agent, a local app operator running in a temporary session. No source checkout is attached. Do not search for or edit application source or other user files. Complete the user's current request through SpeechNexa's app API bridge. For missing essential input such as source text, an audio file or a target language, ask a short question instead of inventing input.`;
   const mode = sourceAttached
     ? request.mode === 'fix'
       ? 'Reproduce it, fix the root cause with the smallest cross-platform change, and run targeted tests.'
@@ -695,19 +695,19 @@ Read AGENTS.md first, then CLAUDE.md and CONTEXT.md. Follow repository skills an
     ? ''
     : `${
         mcpOnly
-          ? 'Your only available tool is the VoiceStudio MCP API tool, named voicestudio_api_request (some clients display it as mcp__voicestudio__api_request). Its server already owns the session credential: do not inspect environment variables, run shell commands, or read files. Call it with GET /openapi.json first, then use only the routes it describes.'
+          ? 'Your only available tool is the SpeechNexa MCP API tool, named voicestudio_api_request (some clients display it as mcp__voicestudio__api_request). Its server already owns the session credential: do not inspect environment variables, run shell commands, or read files. Call it with GET /openapi.json first, then use only the routes it describes.'
           : 'Read the JSON file named by VOICESTUDIO_REPAIR_CONTEXT_FILE and use its baseUrl and headers for direct API requests. Never print, quote, copy, or persist its capability header.'
       } Resolve ordinary setup choices yourself from live hardware, installed models, recommendations and current preferences. An explicit setup or restore request authorizes required model downloads and engine selection. Do not ask the user to repeat actions the API can perform. Never accept a license, change privacy or telemetry consent, enter credentials, delete user data, or connect a remote device for the user; stop and name that single required user decision if one blocks completion.`;
   const finish = sourceAttached
     ? `Do not open a GitHub issue, push, publish, merge, or create a pull request. If the fix and targeted tests pass, end by saying the branch is ready for the user to review and propose as a PR.`
     : `Do not open a GitHub issue, edit source, or propose a pull request. End by stating whether the requested app state was verified and what, if anything, still needs the user's input.`;
   return `${session} ${mode}
-When the report begins ACTION_REQUEST and source is attached, complete the requested setup or recovery through VoiceStudio's supported UI, API, or CLI first; edit source only when a reproducible defect prevents that operation.
-VoiceStudio has exposed its currently attached backend through a session-scoped API bridge. The capability expires when this repair run stops. Diagnose mode permits only read requests; Fix mode permits app operations. Authentication endpoints are unavailable. Electron status, backend restart, and resumable runtime setup controls remain available when the Python backend is down. Use them to restore the backend before calling backend APIs, then poll Electron status and verify the requested app state. Clean reinstall is deliberately unavailable to agents and requires the user to choose Clean Retry.
+When the report begins ACTION_REQUEST and source is attached, complete the requested setup or recovery through SpeechNexa's supported UI, API, or CLI first; edit source only when a reproducible defect prevents that operation.
+SpeechNexa has exposed its currently attached backend through a session-scoped API bridge. The capability expires when this repair run stops. Diagnose mode permits only read requests; Fix mode permits app operations. Authentication endpoints are unavailable. Electron status, backend restart, and resumable runtime setup controls remain available when the Python backend is down. Use them to restore the backend before calling backend APIs, then poll Electron status and verify the requested app state. Clean reinstall is deliberately unavailable to agents and requires the user to choose Clean Retry.
 ${appOperationRules}
 ${finish}
 
-## Selected VoiceStudio features
+## Selected SpeechNexa features
 ${request.features?.map(feature => `${feature}: ${featureGuidance[feature]}`).join('\n') || 'Discover available features using GET /openapi.json.'}
 Feature selection supplies task context, not authorization to perform unrelated operations. Never claim a generation or repair succeeded without verifying the output or live state. Keep the conversation concise and readable; report generated project IDs or output paths so later turns can continue the work.
 
@@ -819,7 +819,7 @@ export async function registerRepairAgents(
     const appOperationOnly = agentUsesAppWorkspace(request, Boolean(workspaceRoot));
     const sourceRoot = appOperationOnly ? null : workspaceRoot;
     if (!sourceRoot && !appOperationOnly)
-      throw new Error('A writable VoiceStudio source checkout is required');
+      throw new Error('A writable SpeechNexa source checkout is required');
 
     // The session is pending from here, before any await: a stop or disposal
     // while the CLI is still being located must prevent the spawn.
